@@ -3,152 +3,254 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Prueba de Hipótesis - 2 Poblaciones</title>
-    <!-- Usamos Bootstrap para el diseño móvil -->
+    <title>Calculadora Estadística Avanzada</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Usamos jStat para calcular el Valor P y Z exactos -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jstat@latest/dist/jstat.min.js"></script>
     <style>
-        body { background-color: #f8f9fa; padding-bottom: 50px; }
-        .card { border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        body { background-color: #f8f9fa; padding-bottom: 50px; font-size: 0.95rem; }
+        .card { border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 20px; border: none; }
         .step-title { color: #0d6efd; font-weight: bold; }
-        .result-box { background-color: #e9ecef; padding: 15px; border-radius: 10px; font-family: monospace; font-size: 1.1em;}
+        .result-box { background-color: #e9ecef; padding: 15px; border-radius: 8px; font-family: monospace; font-size: 1.05em; overflow-x: auto;}
+        .nav-pills .nav-link { border-radius: 8px; margin: 2px; }
     </style>
 </head>
 <body>
-    <div class="container mt-4">
-        <h2 class="text-center mb-4 text-primary">Prueba de Hipótesis (2 Poblaciones)</h2>
+    <div class="container mt-3">
+        <h3 class="text-center mb-3 text-primary">Calculadora Estadística</h3>
         
-        <div class="card p-4">
-            <h5 class="mb-3">Ingreso de Datos</h5>
+        <!-- Pestañas de Navegación -->
+        <ul class="nav nav-pills nav-fill mb-3" id="pills-tab" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" data-bs-toggle="pill" data-bs-target="#tab-medias">Medias (A, B)</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" data-bs-toggle="pill" data-bs-target="#tab-varianzas">Varianzas (E, F)</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" data-bs-toggle="pill" data-bs-target="#tab-potencia">Potencia/Muestra (C, D)</button>
+            </li>
+        </ul>
+
+        <div class="tab-content" id="pills-tabContent">
             
-            <div class="row g-3">
-                <!-- Datos Población 1 -->
-                <div class="col-md-6">
-                    <div class="p-3 border rounded bg-light">
-                        <h6 class="text-secondary">Población 1</h6>
-                        <label>Media (x̄₁)</label>
-                        <input type="number" id="media1" class="form-control mb-2" step="any">
-                        <label>Varianza (σ₁² o S₁²)</label>
-                        <input type="number" id="var1" class="form-control mb-2" step="any">
-                        <label>Tamaño (n₁)</label>
-                        <input type="number" id="n1" class="form-control" step="any">
+            <!-- ================= PESTAÑA 1: MEDIAS (A y B) ================= -->
+            <div class="tab-pane fade show active" id="tab-medias">
+                <div class="card p-3">
+                    <h5 class="text-secondary">Diferencia de Medias</h5>
+                    <div class="mb-2">
+                        <label class="form-label text-danger fw-bold">Tipo de Datos (¡Importante!)</label>
+                        <select id="tipoVarianza" class="form-select border-danger">
+                            <option value="poblacional">Varianzas Poblacionales Conocidas (Prueba Z) -> Inciso A</option>
+                            <option value="muestral">Varianzas Muestrales Desconocidas (Prueba T) -> Inciso B</option>
+                        </select>
                     </div>
+                    <div class="row g-2 mb-2">
+                        <div class="col-6">
+                            <label>Media 1</label><input type="number" id="m1" class="form-control" value="3.75" step="any">
+                        </div>
+                        <div class="col-6">
+                            <label>Media 2</label><input type="number" id="m2" class="form-control" value="2.90" step="any">
+                        </div>
+                        <div class="col-6">
+                            <label>Varianza 1</label><input type="number" id="v1" class="form-control" value="0.0625" step="any">
+                        </div>
+                        <div class="col-6">
+                            <label>Varianza 2</label><input type="number" id="v2" class="form-control" value="0.0625" step="any">
+                        </div>
+                        <div class="col-6">
+                            <label>n 1</label><input type="number" id="n1" class="form-control" value="15" step="any">
+                        </div>
+                        <div class="col-6">
+                            <label>n 2</label><input type="number" id="n2" class="form-control" value="20" step="any">
+                        </div>
+                    </div>
+                    <div class="row g-2 mb-3">
+                        <div class="col-4"><label>Dif Esperada</label><input type="number" id="dif0" class="form-control" value="0.80" step="any"></div>
+                        <div class="col-4"><label>Alfa (α)</label><input type="number" id="alfa_m" class="form-control" value="0.05" step="any"></div>
+                        <div class="col-4"><label>Prueba</label>
+                            <select id="cola_m" class="form-select">
+                                <option value="mayor">></option><option value="menor"><</option><option value="distinto">≠</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button class="btn btn-primary w-100" onclick="calcMedias()">Calcular Medias</button>
+                    <div id="res_medias" class="result-box mt-3 d-none"></div>
                 </div>
+            </div>
 
-                <!-- Datos Población 2 -->
-                <div class="col-md-6">
-                    <div class="p-3 border rounded bg-light">
-                        <h6 class="text-secondary">Población 2</h6>
-                        <label>Media (x̄₂)</label>
-                        <input type="number" id="media2" class="form-control mb-2" step="any">
-                        <label>Varianza (σ₂² o S₂²)</label>
-                        <input type="number" id="var2" class="form-control mb-2" step="any">
-                        <label>Tamaño (n₂)</label>
-                        <input type="number" id="n2" class="form-control" step="any">
+            <!-- ================= PESTAÑA 2: VARIANZAS (E y F) ================= -->
+            <div class="tab-pane fade" id="tab-varianzas">
+                <div class="card p-3">
+                    <h5 class="text-secondary">Pruebas de Varianza</h5>
+                    
+                    <!-- Chi Cuadrada -->
+                    <div class="border p-2 mb-3 rounded">
+                        <h6 class="text-primary">1 Población (Chi-Cuadrada) -> Inciso E</h6>
+                        <div class="row g-2">
+                            <div class="col-4"><label>n</label><input type="number" id="chi_n" class="form-control" value="20"></div>
+                            <div class="col-4"><label>S²</label><input type="number" id="chi_s2" class="form-control" value="0.006" step="any"></div>
+                            <div class="col-4"><label>σ²₀ (H₀)</label><input type="number" id="chi_sigma0" class="form-control" value="0.003" step="any"></div>
+                            <div class="col-6"><label>Alfa (α)</label><input type="number" id="chi_alfa" class="form-control" value="0.05" step="any"></div>
+                            <div class="col-6"><label>H₁</label>
+                                <select id="chi_cola" class="form-select">
+                                    <option value="mayor">Mayor (>)</option><option value="menor">Menor (<)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <button class="btn btn-outline-primary w-100 mt-2" onclick="calcChi()">Calcular Chi²</button>
+                        <div id="res_chi" class="result-box mt-2 d-none"></div>
+                    </div>
+
+                    <!-- F de Fisher -->
+                    <div class="border p-2 rounded">
+                        <h6 class="text-success">2 Poblaciones (Fisher F) -> Inciso F</h6>
+                        <div class="row g-2">
+                            <div class="col-6"><label>S² Num</label><input type="number" id="f_s1" class="form-control" value="0.006" step="any"></div>
+                            <div class="col-6"><label>S² Denom</label><input type="number" id="f_s2" class="form-control" value="0.004" step="any"></div>
+                            <div class="col-6"><label>n Num</label><input type="number" id="f_n1" class="form-control" value="20"></div>
+                            <div class="col-6"><label>n Denom</label><input type="number" id="f_n2" class="form-control" value="15"></div>
+                            <div class="col-6"><label>Razón (H₀)</label><input type="number" id="f_ratio" class="form-control" value="1.20" step="any"></div>
+                            <div class="col-6"><label>Alfa (α)</label><input type="number" id="f_alfa" class="form-control" value="0.05" step="any"></div>
+                        </div>
+                        <button class="btn btn-outline-success w-100 mt-2" onclick="calcF()">Calcular F</button>
+                        <div id="res_f" class="result-box mt-2 d-none"></div>
                     </div>
                 </div>
             </div>
 
-            <hr>
-            <!-- Condiciones de la Prueba -->
-            <div class="row g-3">
-                <div class="col-6">
-                    <label>Diferencia Esperada (μ₁ - μ₂)₀</label>
-                    <input type="number" id="difCero" class="form-control" value="0" step="any">
-                </div>
-                <div class="col-6">
-                    <label>Nivel de Significancia (α)</label>
-                    <input type="number" id="alfa" class="form-control" value="0.05" step="any">
-                </div>
-                <div class="col-12">
-                    <label>Tipo de Prueba (H₁)</label>
-                    <select id="tipoPrueba" class="form-select">
-                        <option value="distinto">Bilateral (≠)</option>
-                        <option value="mayor">Cola Derecha (>)</option>
-                        <option value="menor">Cola Izquierda (<)</option>
-                    </select>
+            <!-- ================= PESTAÑA 3: POTENCIA (C y D) ================= -->
+            <div class="tab-pane fade" id="tab-potencia">
+                <div class="card p-3">
+                    <h5 class="text-secondary">Potencia y Tamaño de Muestra</h5>
+                    <div class="row g-2 mb-3">
+                        <div class="col-6"><label>Dif Nula (H₀)</label><input type="number" id="p_d0" class="form-control" value="0.80" step="any"></div>
+                        <div class="col-6"><label>Dif Real (H₁)</label><input type="number" id="p_d1" class="form-control" value="0.90" step="any"></div>
+                        <div class="col-6"><label>Suma Varianzas</label><input type="number" id="p_sumvar" class="form-control" value="0.125" step="any"></div>
+                        <div class="col-6"><label>Alfa (α)</label><input type="number" id="p_alfa" class="form-control" value="0.05" step="any"></div>
+                    </div>
+                    
+                    <div class="border p-2 mb-3 rounded">
+                        <h6 class="text-info">Calcular Potencia (Inciso C)</h6>
+                        <label>Tamaño n (Por grupo)</label>
+                        <input type="number" id="p_n" class="form-control mb-2" value="17.14"> <!-- Usamos n equivalente para el error estandar del ej -->
+                        <button class="btn btn-outline-info w-100" onclick="calcPotencia()">Calcular Potencia (1-β)</button>
+                        <div id="res_potencia" class="result-box mt-2 d-none"></div>
+                    </div>
+
+                    <div class="border p-2 rounded">
+                        <h6 class="text-warning">Calcular n (Inciso D)</h6>
+                        <label>Potencia Deseada (1-β)</label>
+                        <input type="number" id="p_potDeseada" class="form-control mb-2" value="0.85" step="any">
+                        <button class="btn btn-outline-warning w-100" onclick="calcMuestra()">Calcular Tamaño (n)</button>
+                        <div id="res_muestra" class="result-box mt-2 d-none"></div>
+                    </div>
                 </div>
             </div>
 
-            <button class="btn btn-primary w-100 mt-4" onclick="calcular()">Calcular los 8 Pasos</button>
-        </div>
-
-        <!-- Resultados -->
-        <div id="resultados" class="card p-4 d-none">
-            <h5 class="text-success mb-3">Solución paso a paso:</h5>
-            <div class="result-box" id="outputPasos"></div>
         </div>
     </div>
 
+    <!-- SCRIPTS LÓGICOS -->
     <script>
-        function calcular() {
-            // Recoger datos
-            let m1 = parseFloat(document.getElementById('media1').value);
-            let v1 = parseFloat(document.getElementById('var1').value);
-            let n1 = parseFloat(document.getElementById('n1').value);
+        // --- Lógica de Medias (Z y T) ---
+        function calcMedias() {
+            let m1=parseFloat(document.getElementById('m1').value), v1=parseFloat(document.getElementById('v1').value), n1=parseFloat(document.getElementById('n1').value);
+            let m2=parseFloat(document.getElementById('m2').value), v2=parseFloat(document.getElementById('v2').value), n2=parseFloat(document.getElementById('n2').value);
+            let dif0=parseFloat(document.getElementById('dif0').value), alfa=parseFloat(document.getElementById('alfa_m').value);
+            let tipo=document.getElementById('tipoVarianza').value, cola=document.getElementById('cola_m').value;
             
-            let m2 = parseFloat(document.getElementById('media2').value);
-            let v2 = parseFloat(document.getElementById('var2').value);
-            let n2 = parseFloat(document.getElementById('n2').value);
+            let statCalc, statCritico, pValor, se, gradosLibertad, letra;
             
-            let dif0 = parseFloat(document.getElementById('difCero').value);
-            let alfa = parseFloat(document.getElementById('alfa').value);
-            let tipo = document.getElementById('tipoPrueba').value;
-
-            // Validación básica
-            if(isNaN(m1) || isNaN(v1) || isNaN(n1) || isNaN(m2) || isNaN(v2) || isNaN(n2)) {
-                alert("Por favor, llena todos los campos de las poblaciones.");
-                return;
-            }
-
-            // Cálculos Estadísticos (Asumiendo muestras grandes o varianza conocida -> Prueba Z)
-            let errorEstandar = Math.sqrt((v1 / n1) + (v2 / n2));
-            let zCalculado = ((m1 - m2) - dif0) / errorEstandar;
-            
-            let zCritico, valorP, conclusion, h1Texto, rrTexto;
-
-            // Lógica según el tipo de prueba
-            if (tipo === "distinto") {
-                h1Texto = "μ₁ - μ₂ ≠ " + dif0;
-                zCritico = jStat.normal.inv(1 - alfa/2, 0, 1); // Dos colas
-                valorP = 2 * (1 - jStat.normal.cdf(Math.abs(zCalculado), 0, 1));
-                rrTexto = `Rechazar H₀ si |Z₀| > ${zCritico.toFixed(3)}`;
-                conclusion = (Math.abs(zCalculado) > zCritico) ? "SE RECHAZA H₀" : "NO SE RECHAZA H₀";
-            } else if (tipo === "mayor") {
-                h1Texto = "μ₁ - μ₂ > " + dif0;
-                zCritico = jStat.normal.inv(1 - alfa, 0, 1);
-                valorP = 1 - jStat.normal.cdf(zCalculado, 0, 1);
-                rrTexto = `Rechazar H₀ si Z₀ > ${zCritico.toFixed(3)}`;
-                conclusion = (zCalculado > zCritico) ? "SE RECHAZA H₀" : "NO SE RECHAZA H₀";
+            if(tipo === "poblacional") {
+                letra = "Z";
+                se = Math.sqrt((v1/n1) + (v2/n2));
+                statCalc = ((m1-m2) - dif0) / se;
+                if(cola === "mayor") { statCritico = jStat.normal.inv(1-alfa, 0, 1); pValor = 1-jStat.normal.cdf(statCalc, 0, 1); }
+                else if(cola === "menor") { statCritico = jStat.normal.inv(alfa, 0, 1); pValor = jStat.normal.cdf(statCalc, 0, 1); }
+                else { statCritico = jStat.normal.inv(1-alfa/2, 0, 1); pValor = 2*(1-jStat.normal.cdf(Math.abs(statCalc), 0, 1)); }
             } else {
-                h1Texto = "μ₁ - μ₂ < " + dif0;
-                zCritico = jStat.normal.inv(alfa, 0, 1);
-                valorP = jStat.normal.cdf(zCalculado, 0, 1);
-                rrTexto = `Rechazar H₀ si Z₀ < ${zCritico.toFixed(3)}`;
-                conclusion = (zCalculado < zCritico) ? "SE RECHAZA H₀" : "NO SE RECHAZA H₀";
+                letra = "t";
+                se = Math.sqrt((v1/n1) + (v2/n2));
+                statCalc = ((m1-m2) - dif0) / se;
+                gradosLibertad = n1 + n2 - 2; // Asumiendo varianzas iguales (pooled) simplificado
+                if(cola === "mayor") { statCritico = jStat.studentt.inv(1-alfa, gradosLibertad); pValor = 1-jStat.studentt.cdf(statCalc, gradosLibertad); }
+                else if(cola === "menor") { statCritico = jStat.studentt.inv(alfa, gradosLibertad); pValor = jStat.studentt.cdf(statCalc, gradosLibertad); }
+                else { statCritico = jStat.studentt.inv(1-alfa/2, gradosLibertad); pValor = 2*(1-jStat.studentt.cdf(Math.abs(statCalc), gradosLibertad)); }
             }
-
-            // Construir la salida de los 8 pasos
-            let html = `
-                <span class="step-title">1) Parámetro:</span> θ = μ₁ - μ₂<br>
-                <span class="step-title">2) H₀:</span> μ₁ - μ₂ = ${dif0}<br>
-                <span class="step-title">3) H₁:</span> ${h1Texto}<br>
-                <span class="step-title">4) α:</span> ${alfa}<br>
-                <span class="step-title">5) Estadístico de Prueba:</span> Z₀<br>
-                <span class="step-title">6) Región de Rechazo (RR):</span> ${rrTexto}<br>
-                <span class="step-title">7) Cálculo:</span><br>
-                &nbsp;&nbsp;&nbsp;Z₀ = [(${m1} - ${m2}) - ${dif0}] / √(${v1}/${n1} + ${v2}/${n2})<br>
-                &nbsp;&nbsp;&nbsp;Z₀ = ${zCalculado.toFixed(4)}<br>
-                &nbsp;&nbsp;&nbsp;Valor p = ${valorP.toFixed(4)}<br>
-                <span class="step-title">8) Conclusión:</span> <b>${conclusion}</b> (porque Valor p ${valorP < alfa ? '<' : '>'} α)
-            `;
-
-            document.getElementById('outputPasos').innerHTML = html;
-            document.getElementById('resultados').classList.remove('d-none');
             
-            // Hacer scroll hacia el resultado
-            document.getElementById('resultados').scrollIntoView({ behavior: 'smooth' });
+            let conclusion = (pValor < alfa) ? "SE RECHAZA H₀" : "NO SE RECHAZA H₀";
+            document.getElementById('res_medias').innerHTML = `Prueba ${letra}:<br>Estadístico ${letra}₀ = ${statCalc.toFixed(4)}<br>Valor Crítico = ${statCritico.toFixed(4)}<br>Valor P = ${pValor.toFixed(4)}<br><b>${conclusion}</b>`;
+            document.getElementById('res_medias').classList.remove('d-none');
+        }
+
+        // --- Lógica Chi Cuadrada ---
+        function calcChi() {
+            let n=parseFloat(document.getElementById('chi_n').value), s2=parseFloat(document.getElementById('chi_s2').value);
+            let s0=parseFloat(document.getElementById('chi_sigma0').value), alfa=parseFloat(document.getElementById('chi_alfa').value);
+            let cola=document.getElementById('chi_cola').value;
+            let df = n - 1;
+            let chiCalc = (df * s2) / s0;
+            let chiCritico, pValor;
+
+            if(cola === "mayor") {
+                chiCritico = jStat.chisquare.inv(1-alfa, df);
+                pValor = 1 - jStat.chisquare.cdf(chiCalc, df);
+            } else {
+                chiCritico = jStat.chisquare.inv(alfa, df);
+                pValor = jStat.chisquare.cdf(chiCalc, df);
+            }
+            let conclusion = (pValor < alfa) ? "SE RECHAZA H₀" : "NO SE RECHAZA H₀";
+            document.getElementById('res_chi').innerHTML = `χ²₀ Calculado = ${chiCalc.toFixed(4)}<br>χ² Crítico = ${chiCritico.toFixed(4)}<br>Valor P = ${pValor.toFixed(4)}<br><b>${conclusion}</b>`;
+            document.getElementById('res_chi').classList.remove('d-none');
+        }
+
+        // --- Lógica Fisher F ---
+        function calcF() {
+            let s1=parseFloat(document.getElementById('f_s1').value), s2=parseFloat(document.getElementById('f_s2').value);
+            let n1=parseFloat(document.getElementById('f_n1').value), n2=parseFloat(document.getElementById('f_n2').value);
+            let ratio=parseFloat(document.getElementById('f_ratio').value), alfa=parseFloat(document.getElementById('f_alfa').value);
+            
+            let fCalc = (s1 / s2) / ratio;
+            let df1 = n1 - 1, df2 = n2 - 1;
+            let fCritico = jStat.centralF.inv(1-alfa, df1, df2); // Cola derecha por defecto para este ej
+            let pValor = 1 - jStat.centralF.cdf(fCalc, df1, df2);
+            let conclusion = (pValor < alfa) ? "SE RECHAZA H₀" : "NO SE RECHAZA H₀";
+            
+            document.getElementById('res_f').innerHTML = `F₀ Calculado = ${fCalc.toFixed(4)}<br>F Crítico = ${fCritico.toFixed(4)}<br>Valor P = ${pValor.toFixed(4)}<br><b>${conclusion}</b>`;
+            document.getElementById('res_f').classList.remove('d-none');
+        }
+
+        // --- Lógica Potencia ---
+        function calcPotencia() {
+            let d0=parseFloat(document.getElementById('p_d0').value), d1=parseFloat(document.getElementById('p_d1').value);
+            let sumvar=parseFloat(document.getElementById('p_sumvar').value), alfa=parseFloat(document.getElementById('p_alfa').value);
+            let n=parseFloat(document.getElementById('p_n').value); // Para este ej, simulamos el error estandar
+            
+            let se = Math.sqrt(sumvar / n); // Error estándar
+            let zAlfa = jStat.normal.inv(1-alfa, 0, 1);
+            let vC = d0 + (zAlfa * se);
+            
+            let zBeta = (vC - d1) / se;
+            let potencia = 1 - jStat.normal.cdf(zBeta, 0, 1);
+            
+            document.getElementById('res_potencia').innerHTML = `Valor Crítico (Vc) = ${vC.toFixed(4)}<br>Z(β) = ${zBeta.toFixed(4)}<br><b>Potencia (1-β) = ${(potencia*100).toFixed(2)}%</b>`;
+            document.getElementById('res_potencia').classList.remove('d-none');
+        }
+
+        // --- Lógica Tamaño de Muestra ---
+        function calcMuestra() {
+            let d0=parseFloat(document.getElementById('p_d0').value), d1=parseFloat(document.getElementById('p_d1').value);
+            let sumvar=parseFloat(document.getElementById('p_sumvar').value), alfa=parseFloat(document.getElementById('p_alfa').value);
+            let pot=parseFloat(document.getElementById('p_potDeseada').value);
+            
+            let zAlfa = jStat.normal.inv(1-alfa, 0, 1);
+            let zBeta = jStat.normal.inv(1-pot, 0, 1); // Z para beta
+            
+            let n = (Math.pow(zAlfa - zBeta, 2) * sumvar) / Math.pow(d1 - d0, 2);
+            
+            document.getElementById('res_muestra').innerHTML = `Z(α) = ${zAlfa.toFixed(3)}, Z(β) = ${zBeta.toFixed(3)}<br>n calculado = ${n.toFixed(4)}<br><b>Redondeado (n) = ${Math.ceil(n)}</b>`;
+            document.getElementById('res_muestra').classList.remove('d-none');
         }
     </script>
 </body>
