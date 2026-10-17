@@ -325,7 +325,7 @@
             } catch (error) { alert("Error en Inciso G."); }
         }
 
-        // --- PESTAÑA 4: SUPUESTOS ANOVA (MANUAL ORDEN) ---
+        // --- PESTAÑA 4: SUPUESTOS ANOVA (MANUAL ORDEN CON VECTOR Y MEDIA GLOBAL) ---
         function calcSupuestos() {
             try {
                 let rawText = document.getElementById('anova_datos').value.trim();
@@ -336,11 +336,12 @@
                 
                 let lineas = rawText.split('\n');
                 let allErrors = []; // Almacena { err: valor, ord: indice }
+                let allYValues = []; // Almacena los valores Y originales para la Media Global
                 let htmlOutput = "";
                 let hasOrder = false;
                 
                 // --- GENERACIÓN DE LA TABLA DE ERRORES ---
-                htmlOutput += `<div class="table-responsive mb-4 bg-white p-2 rounded shadow-sm border">
+                htmlOutput += `<div class="table-responsive mb-2 bg-white p-2 rounded shadow-sm border">
                     <h6 class="text-center text-primary mt-2">Tabla de Extracción de Errores Residuales</h6>
                     <table class="table table-bordered text-center error-table table-hover mb-0">
                         <thead class="table-light"><tr><th>Tratamiento</th><th>Datos (Y)</th><th>Media (Ȳ)</th><th>Errores (e)</th></tr></thead><tbody>`;
@@ -366,7 +367,11 @@
                     }
                     if(valoresFila.length === 0) continue;
                     
-                    let media = jStat.mean(valoresFila.map(x => x.val));
+                    // Extraer los valores Y puros para acumularlos
+                    let rowYVals = valoresFila.map(x => x.val);
+                    allYValues.push(...rowYVals);
+                    
+                    let media = jStat.mean(rowYVals);
                     let erroresStr = [];
                     
                     for(let obj of valoresFila) {
@@ -391,6 +396,14 @@
                 let n = allErrors.length;
                 if(n < 4) { alert("Se requieren al menos 4 datos para correr las pruebas."); return; }
 
+                // --- AGREGAR LA MEDIA GLOBAL (Y̿) ---
+                let grandMean = jStat.mean(allYValues);
+                htmlOutput += `
+                <div class="alert alert-light border border-secondary text-center py-2 mb-4 shadow-sm">
+                    <span class="text-secondary fw-bold fs-6">Media Global (Y̿):</span> 
+                    <span class="text-primary fw-bold fs-5 ms-2">${grandMean.toFixed(4)}</span>
+                </div>`;
+
                 // --- 1. ALEATORIEDAD (RACHAS) ---
                 let erroresRachas = [...allErrors];
                 let msjOrden = "";
@@ -401,6 +414,22 @@
                 } else {
                     msjOrden = "<br><span class='badge bg-secondary mt-2 mb-2'>Datos evaluados en orden de lectura (No se indicó posición)</span>";
                 }
+                
+                // --- AGREGAR EL VECTOR VISUAL DE ERRORES ---
+                let vectorHtml = `
+                <div class="p-3 mb-3 bg-white border border-info rounded text-center shadow-sm" style="font-family: monospace; font-size: 0.95rem;">
+                    <div class="fw-bold text-info mb-2" style="font-family: sans-serif;">Vector Lineal de Errores (Orden de Lectura Temporal)</div>
+                    <div class="d-flex flex-wrap justify-content-center gap-2">
+                    ${erroresRachas.map(x => {
+                        let errFmt = (x.err > 0 ? '+' : '') + x.err.toFixed(3);
+                        let color = x.err > 0 ? 'text-danger' : 'text-primary';
+                        let ordLabel = hasOrder ? `<sub class="text-success fw-bold">${x.ord}</sub>` : '';
+                        return `<span class="bg-light border px-2 py-1 rounded shadow-sm"><span class="${color}">${errFmt}</span>${ordLabel}</span>`;
+                    }).join('')}
+                    </div>
+                </div>`;
+                
+                htmlOutput += vectorHtml;
                 
                 let arrRachas = erroresRachas.map(x => x.err);
                 
