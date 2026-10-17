@@ -29,7 +29,7 @@
 
         <div class="tab-content" id="pills-tabContent">
             
-            <!-- PESTAÑAS 1, 2, 3 y 4 INTACTAS -->
+            <!-- PESTAÑA 1: MEDIAS -->
             <div class="tab-pane fade show active" id="tab-medias">
                 <div class="card p-3">
                     <h5 class="text-secondary">Diferencia de Medias</h5>
@@ -57,6 +57,82 @@
                 </div>
             </div>
 
+            <!-- PESTAÑA 2: VARIANZAS -->
             <div class="tab-pane fade" id="tab-varianzas">
                 <div class="card p-3">
-                    <h5
+                    <h5 class="text-secondary">Pruebas de Varianza</h5>
+                    <div class="border p-2 mb-3 rounded">
+                        <h6 class="text-primary">1 Población (Chi-Cuadrada)</h6>
+                        <div class="row g-2">
+                            <div class="col-4"><label>n</label><input type="number" id="chi_n" class="form-control" value="20"></div>
+                            <div class="col-4"><label>S²</label><input type="number" id="chi_s2" class="form-control" value="0.006" step="any"></div>
+                            <div class="col-4"><label>σ²₀</label><input type="number" id="chi_sigma0" class="form-control" value="0.003" step="any"></div>
+                            <div class="col-6"><label>Alfa (α)</label><input type="number" id="chi_alfa" class="form-control" value="0.05" step="any"></div>
+                            <div class="col-6"><label>H₁</label><select id="chi_cola" class="form-select"><option value="mayor">Mayor (>)</option><option value="menor">Menor (<)</option></select></div>
+                        </div>
+                        <button class="btn btn-outline-primary w-100 mt-2" onclick="calcChi()">Calcular Chi²</button>
+                        <div id="res_chi" class="result-box mt-2 d-none"></div>
+                    </div>
+                    <div class="border p-2 rounded">
+                        <h6 class="text-success">2 Poblaciones (Fisher F)</h6>
+                        <div class="row g-2">
+                            <div class="col-6"><label>S² Num</label><input type="number" id="f_s1" class="form-control" value="0.006" step="any"></div>
+                            <div class="col-6"><label>S² Denom</label><input type="number" id="f_s2" class="form-control" value="0.004" step="any"></div>
+                            <div class="col-6"><label>n Num</label><input type="number" id="f_n1" class="form-control" value="20"></div>
+                            <div class="col-6"><label>n Denom</label><input type="number" id="f_n2" class="form-control" value="15"></div>
+                            <div class="col-6"><label>Razón (H₀)</label><input type="number" id="f_ratio" class="form-control" value="1.20" step="any"></div>
+                            <div class="col-6"><label>Alfa (α)</label><input type="number" id="f_alfa" class="form-control" value="0.05" step="any"></div>
+                        </div>
+                        <button class="btn btn-outline-success w-100 mt-2" onclick="calcF()">Calcular F</button>
+                        <div id="res_f" class="result-box mt-2 d-none"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PESTAÑA 3: POTENCIA -->
+            <div class="tab-pane fade" id="tab-potencia">
+                <div class="card p-3">
+                    <h5 class="text-secondary">Potencia y Tamaño de Muestra</h5>
+                    <div class="row g-2 mb-3">
+                        <div class="col-6"><label>Dif Nula (H₀)</label><input type="number" id="p_d0" class="form-control" value="0.80" step="any"></div>
+                        <div class="col-6"><label>Dif Real (H₁)</label><input type="number" id="p_d1" class="form-control" value="0.92" step="any"></div>
+                        <div class="col-6"><label>Suma Varianzas</label><input type="number" id="p_sumvar" class="form-control" value="0.125" step="any"></div>
+                        <div class="col-6"><label>Alfa (α)</label><input type="number" id="p_alfa" class="form-control" value="0.05" step="any"></div>
+                    </div>
+                    <div class="border p-2 mb-3 rounded">
+                        <h6 class="text-info">Calcular Potencia</h6>
+                        <label>Tamaño n</label><input type="number" id="p_n" class="form-control mb-2" value="17.14"> 
+                        <button class="btn btn-outline-info w-100" onclick="calcPotencia()">Calcular Potencia</button>
+                        <div id="res_potencia" class="result-box mt-2 d-none"></div>
+                    </div>
+                    <div class="border p-2 mb-3 rounded">
+                        <h6 class="text-warning">Calcular n</h6>
+                        <label>Potencia Deseada</label><input type="number" id="p_potDeseada" class="form-control mb-2" value="0.85" step="any">
+                        <button class="btn btn-outline-warning w-100" onclick="calcMuestra()">Calcular Tamaño</button>
+                        <div id="res_muestra" class="result-box mt-2 d-none"></div>
+                    </div>
+                    <div class="border p-2 rounded">
+                        <h6 class="text-danger">Probabilidad (Inciso G)</h6>
+                        <label>Valor Crítico (Vc)</label><input type="number" id="p_vc" class="form-control mb-2" value="0.95" step="any">
+                        <button class="btn btn-outline-danger w-100" onclick="calcIncisoG()">Calcular Probabilidad</button>
+                        <div id="res_incisoG" class="result-box mt-2 d-none"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PESTAÑA 4: ALEATORIEDAD -->
+            <div class="tab-pane fade" id="tab-aleatoriedad">
+                <div class="card p-3 border-dark">
+                    <h5 class="text-dark">Prueba de Rachas</h5>
+                    <textarea id="r_datos" class="form-control mb-2" rows="3" placeholder="Ej: 1.2, -0.5, -2.1..."></textarea>
+                    <div class="row g-2 mb-3">
+                        <div class="col-6"><label>Umbral:</label><select id="r_umbral" class="form-select"><option value="mediana">Mediana</option><option value="cero">Cero</option></select></div>
+                        <div class="col-6"><label>Alfa (α)</label><input type="number" id="r_alfa" class="form-control" value="0.05" step="any"></div>
+                    </div>
+                    <button class="btn btn-dark w-100" onclick="calcRachas()">Evaluar Aleatoriedad</button>
+                    <div id="res_rachas" class="result-box mt-3 d-none bg-dark text-light"></div>
+                </div>
+            </div>
+
+            <!-- PESTAÑA 5: TABLAS Y VALOR P -->
+            <div class="tab-
