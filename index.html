@@ -6,7 +6,7 @@
     <title>Calculadora Estadística Avanzada</title>
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- jStat para los cálculos de probabilidad -->
+    <!-- jStat -->
     <script src="https://cdn.jsdelivr.net/npm/jstat@latest/dist/jstat.min.js"></script>
     <style>
         body { background-color: #f8f9fa; padding-bottom: 50px; font-size: 0.95rem; }
@@ -22,13 +22,14 @@
         .test-da { border-color: #198754; }
         .test-ks { border-color: #fd7e14; }
         .test-rachas { border-color: #212529; }
+        .error-table th { font-size: 0.9rem; }
+        .error-table td { font-family: monospace; vertical-align: middle; }
     </style>
 </head>
 <body>
     <div class="container mt-3">
         <h3 class="text-center mb-4 text-primary fw-bold">Calculadora Estadística</h3>
         
-        <!-- Pestañas de Navegación -->
         <ul class="nav nav-pills nav-fill mb-3" id="pills-tab" role="tablist">
             <li class="nav-item" role="presentation"><button class="nav-link active" data-bs-toggle="pill" data-bs-target="#tab-medias" type="button">Medias</button></li>
             <li class="nav-item" role="presentation"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#tab-varianzas" type="button">Varianzas</button></li>
@@ -39,7 +40,7 @@
 
         <div class="tab-content" id="pills-tabContent">
             
-            <!-- PESTAÑA 1, 2 y 3 (Se mantienen iguales visualmente) -->
+            <!-- PESTAÑA 1: MEDIAS -->
             <div class="tab-pane fade show active" id="tab-medias" role="tabpanel">
                 <div class="card p-3">
                     <h5 class="text-secondary">Diferencia de Medias</h5>
@@ -62,6 +63,7 @@
                 </div>
             </div>
 
+            <!-- PESTAÑA 2: VARIANZAS -->
             <div class="tab-pane fade" id="tab-varianzas" role="tabpanel">
                 <div class="card p-3">
                     <h5 class="text-secondary">Pruebas de Varianza</h5>
@@ -93,6 +95,7 @@
                 </div>
             </div>
 
+            <!-- PESTAÑA 3: POTENCIA -->
             <div class="tab-pane fade" id="tab-potencia" role="tabpanel">
                 <div class="card p-3">
                     <h5 class="text-secondary">Potencia y Tamaño de Muestra</h5>
@@ -117,28 +120,28 @@
                 </div>
             </div>
 
-            <!-- PESTAÑA 4 MODIFICADA: SUPUESTOS ANOVA -->
+            <!-- PESTAÑA 4: SUPUESTOS ANOVA (AUTO ERRORES) -->
             <div class="tab-pane fade" id="tab-anova" role="tabpanel">
                 <div class="card p-3 border-dark" style="background-color: #f1ecf9;">
-                    <h5 class="text-dark fw-bold" style="color: #6f42c1 !important;">Diagnóstico de Residuos (ANOVA)</h5>
-                    <p class="text-muted small mb-2">Ingresa los valores residuales separados por comas para evaluar simultáneamente Aleatoriedad y Normalidad.</p>
+                    <h5 class="text-dark fw-bold" style="color: #6f42c1 !important;">Extracción de Errores y Diagnóstico</h5>
+                    <p class="text-muted small mb-2">Ingresa los datos originales del experimento. <b>Escribe un Tratamiento (grupo) por línea</b>, separando los valores con comas.</p>
                     
-                    <textarea id="anova_datos" class="form-control mb-2" rows="3" placeholder="Ej: 1.2, -0.5, 0.3, -1.1..."></textarea>
+                    <textarea id="anova_datos" class="form-control mb-2" rows="5" placeholder="Ejemplo:&#10;12, 15, 14, 11  (Tratamiento 1)&#10;22, 25, 21, 24  (Tratamiento 2)&#10;10, 12, 11, 14  (Tratamiento 3)"></textarea>
                     
                     <div class="row g-2 mb-3">
                         <div class="col-6">
-                            <label>Umbral (Rachas):</label>
-                            <select id="anova_umbral" class="form-select"><option value="cero">Cero (Recomendado)</option><option value="mediana">Mediana</option></select>
+                            <label>Umbral Rachas:</label>
+                            <select id="anova_umbral" class="form-select"><option value="cero">Cero</option><option value="mediana">Mediana</option></select>
                         </div>
                         <div class="col-6">
-                            <label>Alfa Global (α)</label>
+                            <label>Alfa (α)</label>
                             <input type="number" id="anova_alfa" class="form-control" value="0.05" step="any">
                         </div>
                     </div>
-                    <button class="btn w-100 fw-bold text-white" style="background-color: #6f42c1;" onclick="calcSupuestos()">Evaluar Todos los Supuestos</button>
+                    <button class="btn w-100 fw-bold text-white mb-3" style="background-color: #6f42c1;" onclick="calcSupuestos()">Generar Errores y Evaluar Supuestos</button>
                     
-                    <!-- Contenedor de Resultados Dinámicos -->
-                    <div id="res_anova" class="mt-4 d-none"></div>
+                    <!-- Contenedor de Resultados (Tabla y Pruebas) -->
+                    <div id="res_anova" class="d-none"></div>
                 </div>
             </div>
 
@@ -168,62 +171,90 @@
                 </div>
             </div>
 
-        </div> <!-- Fin de tab-content -->
-    </div> <!-- Fin de container -->
+        </div> 
+    </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
-    <!-- SCRIPTS LÓGICOS SEGUROS -->
     <script>
-        function calcMedias() { /* Lógica intacta, igual a la versión anterior */ }
-        function calcChi() { /* Lógica intacta */ }
-        function calcF() { /* Lógica intacta */ }
-        function calcPotencia() { /* Lógica intacta */ }
-        function calcMuestra() { /* Lógica intacta */ }
-        function toggleDfTablas() { /* Lógica intacta */ }
-        function calcCritico() { /* Lógica intacta */ }
-        function calcPValor() { /* Lógica intacta */ }
+        function calcMedias() { /* Igual a versiones anteriores */ }
+        function calcChi() { /* Igual a versiones anteriores */ }
+        function calcF() { /* Igual a versiones anteriores */ }
+        function calcPotencia() { /* Igual a versiones anteriores */ }
+        function calcMuestra() { /* Igual a versiones anteriores */ }
+        function toggleDfTablas() { /* Igual a versiones anteriores */ }
+        function calcCritico() { /* Igual a versiones anteriores */ }
+        function calcPValor() { /* Igual a versiones anteriores */ }
 
         // ==========================================
-        // NUEVA LÓGICA: SUPUESTOS ANOVA (INTEGRADOS)
+        // LÓGICA: TABLA DE ERRORES Y SUPUESTOS
         // ==========================================
         function calcSupuestos() {
             try {
-                let input = document.getElementById('anova_datos').value;
+                let rawText = document.getElementById('anova_datos').value.trim();
                 let alfa = parseFloat(document.getElementById('anova_alfa').value);
                 let tipoUmbral = document.getElementById('anova_umbral').value;
                 
-                let arr = input.split(',').map(x => parseFloat(x.trim())).filter(x => !isNaN(x));
-                let n = arr.length;
-                if(n < 4) { alert("Se requieren al menos 4 datos para evaluar normalidad."); return; }
+                if(!rawText) { alert("Ingresa los datos del experimento."); return; }
                 
+                let lineas = rawText.split('\n');
+                let allErrors = [];
                 let htmlOutput = "";
+                
+                // --- GENERACIÓN DE LA TABLA DE ERRORES ---
+                htmlOutput += `<div class="table-responsive mb-4 bg-white p-2 rounded shadow-sm border">
+                    <h6 class="text-center text-primary mt-2">Tabla de Extracción de Errores Residuales</h6>
+                    <table class="table table-bordered text-center error-table table-hover mb-0">
+                        <thead class="table-light"><tr><th>Tratamiento</th><th>Datos (Y)</th><th>Media (Ȳ)</th><th>Errores (e)</th></tr></thead><tbody>`;
 
-                // -------------------------------------
-                // 1. SUPUESTO DE ALEATORIEDAD (RACHAS)
-                // -------------------------------------
+                let trtCount = 1;
+                for(let i=0; i<lineas.length; i++) {
+                    let linea = lineas[i].trim();
+                    if(!linea) continue; // Ignorar lineas vacias
+                    
+                    let valores = linea.split(',').map(x => parseFloat(x.trim())).filter(x => !isNaN(x));
+                    if(valores.length === 0) continue;
+                    
+                    let media = jStat.mean(valores);
+                    let errores = valores.map(v => v - media);
+                    
+                    allErrors = allErrors.concat(errores); // Acumular en el gran arreglo de residuos
+                    
+                    htmlOutput += `<tr>
+                        <td class="fw-bold bg-light">Tratamiento ${trtCount}</td>
+                        <td>${valores.join(', ')}</td>
+                        <td class="text-primary fw-bold">${media.toFixed(4)}</td>
+                        <td class="text-danger">${errores.map(e => (e > 0 ? '+'+e.toFixed(3) : e.toFixed(3))).join(', ')}</td>
+                    </tr>`;
+                    trtCount++;
+                }
+                
+                htmlOutput += `</tbody></table></div>`;
+                
+                let n = allErrors.length;
+                if(n < 4) { alert("Se requieren más datos para correr las pruebas de normalidad."); return; }
+
+                // --- 1. ALEATORIEDAD (RACHAS) ---
                 let umbral = 0;
                 if(tipoUmbral === 'mediana') {
-                    let sorted_r = [...arr].sort((a,b)=>a-b);
+                    let sorted_r = [...allErrors].sort((a,b)=>a-b);
                     let mid = Math.floor(sorted_r.length/2);
                     umbral = sorted_r.length % 2 !== 0 ? sorted_r[mid] : (sorted_r[mid-1] + sorted_r[mid])/2;
                 }
                 
                 let signos = [];
-                for(let x of arr) { if(x > umbral) signos.push('+'); else if(x < umbral) signos.push('-'); }
-                
-                let n1 = signos.filter(x => x==='+').length;
-                let n2 = signos.filter(x => x==='-').length;
+                for(let x of allErrors) { if(x > umbral) signos.push('+'); else if(x < umbral) signos.push('-'); }
+                let n1 = signos.filter(x => x==='+').length, n2 = signos.filter(x => x==='-').length;
                 
                 if(n1 === 0 || n2 === 0) {
-                    htmlOutput += `<div class="test-section test-rachas"><b>1. Aleatoriedad (Rachas):</b> Error, no hay suficientes signos diferentes para procesar rachas.</div>`;
+                    htmlOutput += `<div class="test-section test-rachas"><b>1. Aleatoriedad (Rachas):</b> Error, no hay suficientes signos diferentes.</div>`;
                 } else {
                     let R = 1; for(let i = 1; i < signos.length; i++) { if(signos[i] !== signos[i-1]) R++; }
                     let muR = ((2 * n1 * n2) / (n1 + n2)) + 1;
                     let varR = (2 * n1 * n2 * (2 * n1 * n2 - n1 - n2)) / (Math.pow(n1 + n2, 2) * (n1 + n2 - 1));
                     let zR = (R - muR) / Math.sqrt(varR);
                     let pValorR = 2 * (1 - jStat.normal.cdf(Math.abs(zR), 0, 1));
-                    let concR = (pValorR < alfa) ? "<span class='text-danger'>SE RECHAZA (Datos No Aleatorios)</span>" : "<span class='text-success'>SE CUMPLE (Son Aleatorios)</span>";
+                    let concR = (pValorR < alfa) ? "<span class='text-danger'>SE RECHAZA (Patrón Detectado)</span>" : "<span class='text-success'>SE CUMPLE (Son Aleatorios)</span>";
                     
                     htmlOutput += `
                     <div class="test-section test-rachas shadow-sm">
@@ -234,31 +265,22 @@
                     </div>`;
                 }
 
-                // -------------------------------------
-                // 2. SUPUESTO DE NORMALIDAD (3 PRUEBAS)
-                // -------------------------------------
-                
-                // Matemáticas Base
-                let mean = jStat.mean(arr);
-                let std = jStat.stdev(arr, true); // Muestral
+                // --- 2. NORMALIDAD ---
+                let meanE = jStat.mean(allErrors);
+                let stdE = jStat.stdev(allErrors, true);
                 
                 let sum2 = 0, sum3 = 0, sum4 = 0;
-                for(let x of arr) {
-                    let dev = x - mean;
-                    sum2 += Math.pow(dev, 2);
-                    sum3 += Math.pow(dev, 3);
-                    sum4 += Math.pow(dev, 4);
+                for(let x of allErrors) {
+                    let dev = x - meanE;
+                    sum2 += Math.pow(dev, 2); sum3 += Math.pow(dev, 3); sum4 += Math.pow(dev, 4);
                 }
                 
-                let m2 = sum2 / n;
-                let m3 = sum3 / n;
-                let m4 = sum4 / n;
-                
+                let m2 = sum2 / n, m3 = sum3 / n, m4 = sum4 / n;
                 let skewness = m3 / Math.pow(m2, 1.5);
                 let kurtosis = m4 / Math.pow(m2, 2); 
                 let excessKurtosis = kurtosis - 3;
 
-                // A) Prueba Jarque-Bera
+                // Jarque-Bera
                 let jbStat = (n / 6) * (Math.pow(skewness, 2) + (Math.pow(excessKurtosis, 2) / 4));
                 let pValorJB = 1 - jStat.chisquare.cdf(jbStat, 2);
                 let concJB = (pValorJB < alfa) ? "<span class='text-danger'>Rechaza Normalidad</span>" : "<span class='text-success'>Cumple Normalidad</span>";
@@ -266,13 +288,13 @@
                 htmlOutput += `
                 <div class="test-section test-jb shadow-sm">
                     <h6 class="text-primary fw-bold">Supuesto 2.A: Normalidad (Jarque-Bera)</h6>
-                    Asimetría (S) = ${skewness.toFixed(4)} | Curtosis Exceso (K) = ${excessKurtosis.toFixed(4)}<br>
-                    Estadístico JB (χ²) = ${jbStat.toFixed(4)} | Valor P = ${pValorJB.toFixed(4)}<br>
+                    Asimetría = ${skewness.toFixed(4)} | Curtosis Exceso = ${excessKurtosis.toFixed(4)}<br>
+                    Estadístico JB = ${jbStat.toFixed(4)} | Valor P = ${pValorJB.toFixed(4)}<br>
                     <b>Conclusión: ${concJB}</b>
                 </div>`;
 
-                // B) Prueba Omnibus D'Agostino-Pearson (K Cuadrada)
-                let zSkew = skewness / Math.sqrt(6/n); // Aproximación estándar simple
+                // D'Agostino
+                let zSkew = skewness / Math.sqrt(6/n);
                 let zKurt = excessKurtosis / Math.sqrt(24/n);
                 let k2Stat = Math.pow(zSkew, 2) + Math.pow(zKurt, 2);
                 let pValorDA = 1 - jStat.chisquare.cdf(k2Stat, 2);
@@ -281,25 +303,21 @@
                 htmlOutput += `
                 <div class="test-section test-da shadow-sm">
                     <h6 class="text-success fw-bold">Supuesto 2.B: Normalidad (D'Agostino K²)</h6>
-                    Puntaje Z(Sesgo) = ${zSkew.toFixed(4)} | Puntaje Z(Curt) = ${zKurt.toFixed(4)}<br>
+                    Z(Sesgo) = ${zSkew.toFixed(4)} | Z(Curt) = ${zKurt.toFixed(4)}<br>
                     Estadístico K² = ${k2Stat.toFixed(4)} | Valor P = ${pValorDA.toFixed(4)}<br>
                     <b>Conclusión: ${concDA}</b>
                 </div>`;
 
-                // C) Prueba Kolmogorov-Smirnov (K-S Estándar)
-                let sorted = [...arr].sort((a,b)=>a-b);
+                // K-S
+                let sortedE = [...allErrors].sort((a,b)=>a-b);
                 let maxD = 0;
                 for(let i=0; i<n; i++) {
                     let empCDF_left = i/n;
                     let empCDF_right = (i+1)/n;
-                    let normCDF = jStat.normal.cdf(sorted[i], mean, std);
-                    
-                    let diff1 = Math.abs(empCDF_right - normCDF);
-                    let diff2 = Math.abs(empCDF_left - normCDF);
-                    maxD = Math.max(maxD, diff1, diff2);
+                    let normCDF = jStat.normal.cdf(sortedE[i], meanE, stdE);
+                    maxD = Math.max(maxD, Math.abs(empCDF_right - normCDF), Math.abs(empCDF_left - normCDF));
                 }
                 
-                // Valor Crítico estándar de K-S para Alfa
                 let ksCritico = Math.sqrt(-0.5 * Math.log(alfa / 2)) / Math.sqrt(n); 
                 let concKS = (maxD > ksCritico) ? "<span class='text-danger'>Rechaza Normalidad</span>" : "<span class='text-success'>Cumple Normalidad</span>";
 
@@ -311,13 +329,12 @@
                     <b>Conclusión: ${concKS}</b>
                 </div>`;
 
-                // Renderizar todo
                 let resDiv = document.getElementById('res_anova');
                 resDiv.innerHTML = htmlOutput;
                 resDiv.classList.remove('d-none');
 
             } catch (error) { 
-                alert("Error al procesar Supuestos. Revisa que los números estén separados por coma."); 
+                alert("Error de sintaxis. Revisa que los números estén separados por coma."); 
                 console.error(error); 
             }
         }
