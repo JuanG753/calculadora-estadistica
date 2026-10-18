@@ -206,7 +206,7 @@
     <!-- BOTÓN OCULTO PARA EL ESTUDIANTE (EASTER EGG) -->
     <div class="btn-fantasma" onclick="abrirFormulas()">.</div>
 
-    <!-- MODAL DE FÓRMULAS OCULTAS -->
+    <!-- MODAL DE FÓRMULAS OCULTAS CORREGIDO -->
     <div class="modal fade" id="modalFormulas" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-scrollable">
             <div class="modal-content">
@@ -220,7 +220,7 @@
                         <b>Z<sub>0</sub> (Poblacional):</b><br>
                         Z = 
                         <div class="math-frac">
-                            <span>(X̄₁ - X̄₂) - D₀</span>
+                            <span>(X̄₁ - X̄₂) - (μ₁ - μ₂)</span>
                             <span class="fdn">√ (σ₁²/n₁ + σ₂²/n₂)</span>
                         </div>
                     </div>
@@ -228,7 +228,7 @@
                         <b>T<sub>0</sub> (Muestral):</b><br>
                         t = 
                         <div class="math-frac">
-                            <span>(X̄₁ - X̄₂) - D₀</span>
+                            <span>(X̄₁ - X̄₂) - (μ₁ - μ₂)</span>
                             <span class="fdn">√ (S₁²/n₁ + S₂²/n₂)</span>
                         </div>
                         <br><i>df = n₁ + n₂ - 2</i>
@@ -239,22 +239,33 @@
                         <b>Chi-Cuadrada (1 Pob):</b> χ²₀ = (n - 1)S² / σ₀²
                     </div>
                     <div class="math-box">
-                        <b>Fisher F (2 Pob):</b> F₀ = (S₁² / S₂²) / Ratio H₀
+                        <b>Fisher F (2 Pob):</b><br>
+                        F₀ = 
+                        <div class="math-frac">
+                            <span>(S₁² / S₂²)</span>
+                            <span class="fdn">(σ₁² / σ₂²)</span>
+                        </div>
                     </div>
 
-                    <h5 class="text-primary border-bottom pb-1 mt-4">3. Potencia y Tamaño (Incisos A al G)</h5>
+                    <h5 class="text-primary border-bottom pb-1 mt-4">3. Potencia y Tamaño de Muestra</h5>
                     <div class="math-box">
-                        <b>Valor Crítico (Vc):</b> Vc = H₀ + Z_α * √ (ΣV / n)
+                        <b>Valor Crítico (Vc):</b><br> 
+                        Vc = μ₀ + Z_α * √ (σ₁²/n₁ + σ₂²/n₂)
                     </div>
                     <div class="math-box">
-                        <b>Potencia (1 - β):</b> Z_β = (Vc - H₁) / √ (ΣV / n)
+                        <b>Potencia (1 - β):</b><br>
+                        Z_β = 
+                        <div class="math-frac">
+                            <span>(Vc - μ₁)</span>
+                            <span class="fdn">√ (σ₁²/n₁ + σ₂²/n₂)</span>
+                        </div>
                     </div>
                     <div class="math-box">
-                        <b>Cálculo de 'n':</b><br>
+                        <b>Cálculo de 'n' (muestras iguales):</b><br>
                         n = 
                         <div class="math-frac">
-                            <span>(Z_α - Z_β)² * ΣVarianza</span>
-                            <span class="fdn">(H₁ - H₀)²</span>
+                            <span>(Z_α - Z_β)² * (σ₁² + σ₂²)</span>
+                            <span class="fdn">(μ₁ - μ₀)²</span>
                         </div>
                     </div>
 
@@ -659,185 +670,3 @@
                 let bfF = calcularF_Anova(dataBF);
                 let pValorBF = 1 - jStat.centralF.cdf(bfF, k_grupos - 1, n - k_grupos);
                 let concBF = (pValorBF < alfa) ? "<span class='text-danger'>Rechaza Homogeneidad</span>" : "<span class='text-success'>Cumple Homogeneidad</span>";
-
-                htmlOutput += `
-                <div class="accordion mb-3 shadow-sm" id="accordionHomocedasticidad">
-                    <div class="accordion-item">
-                        <h2 class="accordion-header">
-                            <button class="accordion-button collapsed fw-bold text-danger" type="button" data-bs-toggle="collapse" data-bs-target="#collapseHomocedasticidad">
-                                3. Supuesto de Homocedasticidad (Igualdad de Varianzas)
-                            </button>
-                        </h2>
-                        <div id="collapseHomocedasticidad" class="accordion-collapse collapse" data-bs-parent="#accordionHomocedasticidad">
-                            <div class="accordion-body bg-light small">
-                                <div class="test-card border-bartlett bg-white p-2">
-                                    <h6 class="text-danger fw-bold">A) Prueba de Bartlett (Clásica)</h6>${htmlBartlett}
-                                </div>
-                                <div class="test-card border-levene bg-white p-2">
-                                    <h6 class="text-info fw-bold">B) Prueba de Levene (Basada en Media)</h6>
-                                    Estadístico F₀ = ${leveneF.toFixed(4)} | Valor P = ${pValorLev.toFixed(4)}<br><b>Conclusión: ${concLev}</b>
-                                </div>
-                                <div class="test-card border-bf bg-white p-2">
-                                    <h6 class="fw-bold" style="color: #6610f2;">C) Prueba de Brown-Forsythe (Robusta - Mediana)</h6>
-                                    Estadístico F₀ = ${bfF.toFixed(4)} | Valor P = ${pValorBF.toFixed(4)}<br><b>Conclusión: ${concBF}</b>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>`;
-
-                let sst = 0, sce = 0, sct = 0;
-                for(let y of allYValues) { sst += Math.pow(y - grandMean, 2); }
-                for(let obj of allErrors) { sce += Math.pow(obj.err, 2); }
-                sct = sst - sce;
-                if(sct < 0) sct = 0; 
-
-                let df_t = k_grupos - 1;
-                let df_e = n - k_grupos;
-                let df_tot = n - 1;
-
-                let cm_t = sct / df_t;
-                let cm_e = sce / df_e;
-
-                let f_stat_anova = cm_t / cm_e;
-                let p_val_anova = 1 - jStat.centralF.cdf(f_stat_anova, df_t, df_e);
-                let f_crit_anova = jStat.centralF.inv(1 - alfa, df_t, df_e);
-
-                let conclusionAnova = "";
-                if (p_val_anova < alfa) {
-                    conclusionAnova = `<span class='text-danger fw-bold'>SE RECHAZA H₀</span><br><span class="text-secondary small">Hay evidencia estadística significativa de que al menos una de las medias de los tratamientos es diferente.</span>`;
-                } else {
-                    conclusionAnova = `<span class='text-success fw-bold'>NO SE RECHAZA H₀</span><br><span class="text-secondary small">No hay evidencia estadística suficiente para afirmar que las medias de los tratamientos son diferentes (se asumen iguales).</span>`;
-                }
-
-                htmlOutput += `
-                <div class="card border border-primary shadow mt-4">
-                    <div class="card-header bg-primary text-white text-center fw-bold fs-5">
-                        TABLA ANOVA
-                    </div>
-                    <div class="card-body p-0">
-                        <div class="table-responsive">
-                            <table class="table table-bordered text-center mb-0 align-middle">
-                                <thead class="table-light">
-                                    <tr class="small">
-                                        <th>Fuente de Variación</th>
-                                        <th>Suma de Cuadrados (SS)</th>
-                                        <th>Grados de Libertad (df)</th>
-                                        <th>Cuadrado Medio (MS)</th>
-                                        <th>F₀ Calculada</th>
-                                        <th>Valor p</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td class="fw-bold bg-light">Tratamientos</td>
-                                        <td>${sct.toFixed(4)}</td>
-                                        <td>${df_t}</td>
-                                        <td>${cm_t.toFixed(4)}</td>
-                                        <td class="fw-bold text-primary fs-5">${f_stat_anova.toFixed(4)}</td>
-                                        <td class="fw-bold ${(p_val_anova < alfa)?'text-danger':'text-success'}">${p_val_anova.toFixed(4)}</td>
-                                    </tr>
-                                    <tr>
-                                        <td class="fw-bold bg-light">Error</td>
-                                        <td>${sce.toFixed(4)}</td>
-                                        <td>${df_e}</td>
-                                        <td>${cm_e.toFixed(4)}</td>
-                                        <td class="bg-light"></td>
-                                        <td class="bg-light"></td>
-                                    </tr>
-                                    <tr class="table-light border-secondary">
-                                        <td class="fw-bold">Total</td>
-                                        <td class="fw-bold">${sst.toFixed(4)}</td>
-                                        <td class="fw-bold">${df_tot}</td>
-                                        <td></td>
-                                        <td></td>
-                                        <td></td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                    <div class="card-footer bg-white text-center py-3">
-                        <div class="mb-2 text-dark">F Crítico (α=${alfa}) = <b>${f_crit_anova.toFixed(4)}</b></div>
-                        <div class="fs-5 p-2 rounded bg-light border">${conclusionAnova}</div>
-                    </div>
-                </div>`;
-
-                let resDiv = document.getElementById('res_anova');
-                resDiv.innerHTML = htmlOutput;
-                resDiv.classList.remove('d-none');
-
-            } catch (error) { 
-                alert("Error de procesamiento. Verifica el formato de tus datos."); 
-                console.error(error);
-            }
-        }
-
-        function toggleDfTablas() {
-            try {
-                let dist = document.getElementById('t_dist').value;
-                let divSimple = document.getElementById('div_df_simple'), divDoble = document.getElementById('div_df_doble');
-                divSimple.classList.add('d-none'); divDoble.classList.add('d-none');
-                if(dist === 't' || dist === 'chi') divSimple.classList.remove('d-none');
-                else if(dist === 'f') divDoble.classList.remove('d-none');
-            } catch(e) {}
-        }
-
-        function calcCritico() {
-            try {
-                let dist = document.getElementById('t_dist').value, alfa = parseFloat(document.getElementById('t_alfa').value), cola = document.getElementById('t_cola').value, res = "";
-                if(dist === 'z') {
-                    if(cola === 'bilateral') res = `± ${jStat.normal.inv(1 - alfa/2, 0, 1).toFixed(4)}`;
-                    else if(cola === 'derecha') res = `+ ${jStat.normal.inv(1 - alfa, 0, 1).toFixed(4)}`;
-                    else res = `${jStat.normal.inv(alfa, 0, 1).toFixed(4)}`;
-                } else if(dist === 't') {
-                    let df = parseFloat(document.getElementById('t_df').value);
-                    if(cola === 'bilateral') res = `± ${jStat.studentt.inv(1 - alfa/2, df).toFixed(4)}`;
-                    else if(cola === 'derecha') res = `+ ${jStat.studentt.inv(1 - alfa, df).toFixed(4)}`;
-                    else res = `${jStat.studentt.inv(alfa, df).toFixed(4)}`;
-                } else if(dist === 'chi') {
-                    let df = parseFloat(document.getElementById('t_df').value);
-                    if(cola === 'bilateral') res = `<div class="fs-6 text-start">Inferior: <b>${jStat.chisquare.inv(alfa/2, df).toFixed(4)}</b><br>Superior: <b>${jStat.chisquare.inv(1 - alfa/2, df).toFixed(4)}</b></div>`;
-                    else if(cola === 'derecha') res = `${jStat.chisquare.inv(1 - alfa, df).toFixed(4)}`;
-                    else res = `${jStat.chisquare.inv(alfa, df).toFixed(4)}`;
-                } else if(dist === 'f') {
-                    let df1 = parseFloat(document.getElementById('t_df1').value), df2 = parseFloat(document.getElementById('t_df2').value);
-                    if(cola === 'bilateral') res = `<div class="fs-6 text-start">Inferior: <b>${jStat.centralF.inv(alfa/2, df1, df2).toFixed(4)}</b><br>Superior: <b>${jStat.centralF.inv(1 - alfa/2, df1, df2).toFixed(4)}</b></div>`;
-                    else if(cola === 'derecha') res = `${jStat.centralF.inv(1 - alfa, df1, df2).toFixed(4)}`;
-                    else res = `${jStat.centralF.inv(alfa, df1, df2).toFixed(4)}`;
-                }
-                document.getElementById('res_critico').innerHTML = `<span class="text-muted fs-6">Valor Crítico:</span><br><b>${res}</b>`;
-                document.getElementById('res_critico').classList.remove('d-none'); document.getElementById('res_pvalor').classList.add('d-none'); 
-            } catch(error) { alert("Error calculando Valor Crítico. Verifica grados de libertad."); }
-        }
-
-        function calcPValor() {
-            try {
-                let dist = document.getElementById('t_dist').value, val = parseFloat(document.getElementById('t_stat').value), cola = document.getElementById('t_cola').value, p = 0;
-                if(dist === 'z') {
-                    if(cola === 'derecha') p = 1 - jStat.normal.cdf(val, 0, 1);
-                    else if(cola === 'izquierda') p = jStat.normal.cdf(val, 0, 1);
-                    else p = 2 * (1 - jStat.normal.cdf(Math.abs(val), 0, 1));
-                } else if(dist === 't') {
-                    let df = parseFloat(document.getElementById('t_df').value);
-                    if(cola === 'derecha') p = 1 - jStat.studentt.cdf(val, df);
-                    else if(cola === 'izquierda') p = jStat.studentt.cdf(val, df);
-                    else p = 2 * (1 - jStat.studentt.cdf(Math.abs(val), df));
-                } else if(dist === 'chi') {
-                    let df = parseFloat(document.getElementById('t_df').value), cdf = jStat.chisquare.cdf(val, df);
-                    if(cola === 'derecha') p = 1 - cdf;
-                    else if(cola === 'izquierda') p = cdf;
-                    else p = 2 * Math.min(cdf, 1 - cdf);
-                } else if(dist === 'f') {
-                    let df1 = parseFloat(document.getElementById('t_df1').value), df2 = parseFloat(document.getElementById('t_df2').value), cdf = jStat.centralF.cdf(val, df1, df2);
-                    if(cola === 'derecha') p = 1 - cdf;
-                    else if(cola === 'izquierda') p = cdf;
-                    else p = 2 * Math.min(cdf, 1 - cdf);
-                }
-                document.getElementById('res_pvalor').innerHTML = `<span class="text-muted fs-6">Probabilidad (Valor P):</span><br><b>${p.toFixed(5)}</b><br><span class="fs-6 text-secondary">(${ (p*100).toFixed(3) }%)</span>`;
-                document.getElementById('res_pvalor').classList.remove('d-none'); document.getElementById('res_critico').classList.add('d-none'); 
-            } catch(error) { alert("Error calculando el p-Valor. Verifica los datos."); }
-        }
-    </script>
-</body>
-</html>
