@@ -17,13 +17,17 @@
         .tab-anova.active { background-color: #6f42c1 !important; color: white !important; }
         .tab-tablas { color: #0dcaf0; border: 1px solid #0dcaf0; }
         .tab-tablas.active { background-color: #0dcaf0 !important; color: black !important; }
-        .test-section { border-left: 4px solid; padding-left: 10px; margin-bottom: 15px; background: #fff; padding: 10px; border-radius: 4px;}
-        .test-jb { border-color: #0d6efd; }
-        .test-da { border-color: #198754; }
-        .test-ks { border-color: #fd7e14; }
-        .test-rachas { border-color: #212529; }
         .error-table th { font-size: 0.9rem; }
         .error-table td { font-family: monospace; vertical-align: middle; }
+        .accordion-button:not(.collapsed) { background-color: #f8f9fa; color: inherit; box-shadow: none; }
+        .accordion-button:focus { box-shadow: none; }
+        .test-card { border-left: 4px solid; margin-bottom: 10px; border-radius: 4px; }
+        .border-jb { border-color: #0d6efd; }
+        .border-da { border-color: #198754; }
+        .border-ks { border-color: #fd7e14; }
+        .border-bartlett { border-color: #dc3545; }
+        .border-levene { border-color: #0dcaf0; }
+        .border-bf { border-color: #6610f2; }
     </style>
 </head>
 <body>
@@ -127,13 +131,13 @@
                 </div>
             </div>
 
-            <!-- ================= PESTAÑA 4: SUPUESTOS ANOVA (MANUAL ORDEN) ================= -->
+            <!-- ================= PESTAÑA 4: SUPUESTOS ANOVA ================= -->
             <div class="tab-pane fade" id="tab-anova" role="tabpanel">
                 <div class="card p-3 border-dark" style="background-color: #f1ecf9;">
                     <h5 class="text-dark fw-bold" style="color: #6f42c1 !important;">Extracción de Errores y Diagnóstico</h5>
-                    <p class="text-muted small mb-2">Ingresa los datos del experimento. <b>Escribe un Tratamiento por línea</b>. Para la prueba de rachas, asigna el orden temporal usando el formato <code>Valor:Orden</code> (ej. 871:7).</p>
+                    <p class="text-muted small mb-2">Ingresa los datos del experimento. <b>Escribe un Tratamiento por línea</b>. Para la prueba de rachas, asigna el orden temporal usando el formato <code>Valor:Orden</code>.</p>
                     
-                    <textarea id="anova_datos" class="form-control mb-3" rows="5" placeholder="Ejemplo de la pizarra:&#10;871:7, 869:9, 872:12, 870:3&#10;867:10, 866:1, 868:11, 865:5&#10;874:2, 875:8, 875:6, 868:4"></textarea>
+                    <textarea id="anova_datos" class="form-control mb-3" rows="5" placeholder="Ejemplo de la pizarra:&#10;871:7, 869:9, 872:12, 870:3&#10;867:10, 866:1, 868:11, 865:5&#10;874:2, 875:8, 873:6, 868:4"></textarea>
 
                     <div class="row g-2 mb-3">
                         <div class="col-6">
@@ -145,7 +149,7 @@
                             <input type="number" id="anova_alfa" class="form-control" value="0.05" step="any">
                         </div>
                     </div>
-                    <button class="btn w-100 fw-bold text-white mb-3" style="background-color: #6f42c1;" onclick="calcSupuestos()">Generar Errores y Evaluar Supuestos</button>
+                    <button class="btn w-100 fw-bold text-white mb-3 shadow" style="background-color: #6f42c1;" onclick="calcSupuestos()">Generar Errores y Evaluar Supuestos</button>
                     
                     <!-- Contenedor de Resultados Dinámicos -->
                     <div id="res_anova" class="d-none"></div>
@@ -185,108 +189,67 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
     <!-- ==============================================
-         TODAS LAS FUNCIONES JAVASCRIPT COMPLETAS
+         TODAS LAS FUNCIONES JAVASCRIPT
          ============================================== -->
     <script>
-        // --- PESTAÑA 1: MEDIAS ---
         function calcMedias() {
             try {
-                let m1 = parseFloat(document.getElementById('m1').value);
-                let v1 = parseFloat(document.getElementById('v1').value);
-                let n1 = parseFloat(document.getElementById('n1').value);
-                let m2 = parseFloat(document.getElementById('m2').value);
-                let v2 = parseFloat(document.getElementById('v2').value);
-                let n2 = parseFloat(document.getElementById('n2').value);
-                let dif0 = parseFloat(document.getElementById('dif0').value);
-                let alfa = parseFloat(document.getElementById('alfa_m').value);
-                let tipo = document.getElementById('tipoVarianza').value;
-                let cola = document.getElementById('cola_m').value;
-                
+                let m1 = parseFloat(document.getElementById('m1').value), v1 = parseFloat(document.getElementById('v1').value), n1 = parseFloat(document.getElementById('n1').value);
+                let m2 = parseFloat(document.getElementById('m2').value), v2 = parseFloat(document.getElementById('v2').value), n2 = parseFloat(document.getElementById('n2').value);
+                let dif0 = parseFloat(document.getElementById('dif0').value), alfa = parseFloat(document.getElementById('alfa_m').value);
+                let tipo = document.getElementById('tipoVarianza').value, cola = document.getElementById('cola_m').value;
                 let statCalc, statCritico, pValor, se, gradosLibertad, letra;
-                
                 if(tipo === "poblacional") {
-                    letra = "Z"; 
-                    se = Math.sqrt((v1/n1) + (v2/n2)); 
-                    statCalc = ((m1-m2) - dif0) / se;
+                    letra = "Z"; se = Math.sqrt((v1/n1) + (v2/n2)); statCalc = ((m1-m2) - dif0) / se;
                     if(cola === "mayor") { statCritico = jStat.normal.inv(1-alfa, 0, 1); pValor = 1-jStat.normal.cdf(statCalc, 0, 1); }
                     else if(cola === "menor") { statCritico = jStat.normal.inv(alfa, 0, 1); pValor = jStat.normal.cdf(statCalc, 0, 1); }
                     else { statCritico = jStat.normal.inv(1-alfa/2, 0, 1); pValor = 2*(1-jStat.normal.cdf(Math.abs(statCalc), 0, 1)); }
                 } else {
-                    letra = "t"; 
-                    se = Math.sqrt((v1/n1) + (v2/n2)); 
-                    statCalc = ((m1-m2) - dif0) / se; 
-                    gradosLibertad = n1 + n2 - 2; 
+                    letra = "t"; se = Math.sqrt((v1/n1) + (v2/n2)); statCalc = ((m1-m2) - dif0) / se; gradosLibertad = n1 + n2 - 2; 
                     if(cola === "mayor") { statCritico = jStat.studentt.inv(1-alfa, gradosLibertad); pValor = 1-jStat.studentt.cdf(statCalc, gradosLibertad); }
                     else if(cola === "menor") { statCritico = jStat.studentt.inv(alfa, gradosLibertad); pValor = jStat.studentt.cdf(statCalc, gradosLibertad); }
                     else { statCritico = jStat.studentt.inv(1-alfa/2, gradosLibertad); pValor = 2*(1-jStat.studentt.cdf(Math.abs(statCalc), gradosLibertad)); }
                 }
-                
                 let conclusion = (pValor < alfa) ? "SE RECHAZA H₀" : "NO SE RECHAZA H₀";
                 document.getElementById('res_medias').innerHTML = `Prueba ${letra}:<br>Estadístico ${letra}₀ = ${statCalc.toFixed(4)}<br>Valor Crítico = ${statCritico.toFixed(4)}<br>Valor P = ${pValor.toFixed(4)}<br><b>${conclusion}</b>`;
                 document.getElementById('res_medias').classList.remove('d-none');
-            } catch (error) { alert("Error en Medias: Revisa los datos ingresados."); }
+            } catch (error) { alert("Error en Medias."); }
         }
 
-        // --- PESTAÑA 2: VARIANZAS (CHI) ---
         function calcChi() {
             try {
-                let n = parseFloat(document.getElementById('chi_n').value);
-                let s2 = parseFloat(document.getElementById('chi_s2').value);
-                let s0 = parseFloat(document.getElementById('chi_sigma0').value);
-                let alfa = parseFloat(document.getElementById('chi_alfa').value);
+                let n = parseFloat(document.getElementById('chi_n').value), s2 = parseFloat(document.getElementById('chi_s2').value);
+                let s0 = parseFloat(document.getElementById('chi_sigma0').value), alfa = parseFloat(document.getElementById('chi_alfa').value);
                 let cola = document.getElementById('chi_cola').value;
-                
-                let df = n - 1; 
-                let chiCalc = (df * s2) / s0; 
-                let chiCritico, pValor;
-                
+                let df = n - 1; let chiCalc = (df * s2) / s0; let chiCritico, pValor;
                 if(cola === "mayor") { chiCritico = jStat.chisquare.inv(1-alfa, df); pValor = 1 - jStat.chisquare.cdf(chiCalc, df); }
                 else { chiCritico = jStat.chisquare.inv(alfa, df); pValor = jStat.chisquare.cdf(chiCalc, df); }
-                
                 let conclusion = (pValor < alfa) ? "SE RECHAZA H₀" : "NO SE RECHAZA H₀";
                 document.getElementById('res_chi').innerHTML = `χ²₀ Calculado = ${chiCalc.toFixed(4)}<br>χ² Crítico = ${chiCritico.toFixed(4)}<br>Valor P = ${pValor.toFixed(4)}<br><b>${conclusion}</b>`;
                 document.getElementById('res_chi').classList.remove('d-none');
-            } catch (error) { alert("Error en Chi-Cuadrada: Revisa los datos."); }
+            } catch (error) { alert("Error en Chi-Cuadrada."); }
         }
 
-        // --- PESTAÑA 2: VARIANZAS (FISHER F) ---
         function calcF() {
             try {
-                let s1 = parseFloat(document.getElementById('f_s1').value);
-                let s2 = parseFloat(document.getElementById('f_s2').value);
-                let n1 = parseFloat(document.getElementById('f_n1').value);
-                let n2 = parseFloat(document.getElementById('f_n2').value);
-                let ratio = parseFloat(document.getElementById('f_ratio').value);
-                let alfa = parseFloat(document.getElementById('f_alfa').value);
-                
-                let fCalc = (s1 / s2) / ratio; 
-                let df1 = n1 - 1;
-                let df2 = n2 - 1;
-                
-                let fCritico = jStat.centralF.inv(1-alfa, df1, df2); 
-                let pValor = 1 - jStat.centralF.cdf(fCalc, df1, df2);
-                
+                let s1 = parseFloat(document.getElementById('f_s1').value), s2 = parseFloat(document.getElementById('f_s2').value);
+                let n1 = parseFloat(document.getElementById('f_n1').value), n2 = parseFloat(document.getElementById('f_n2').value);
+                let ratio = parseFloat(document.getElementById('f_ratio').value), alfa = parseFloat(document.getElementById('f_alfa').value);
+                let fCalc = (s1 / s2) / ratio; let df1 = n1 - 1, df2 = n2 - 1;
+                let fCritico = jStat.centralF.inv(1-alfa, df1, df2); let pValor = 1 - jStat.centralF.cdf(fCalc, df1, df2);
                 let conclusion = (pValor < alfa) ? "SE RECHAZA H₀" : "NO SE RECHAZA H₀";
                 document.getElementById('res_f').innerHTML = `F₀ Calculado = ${fCalc.toFixed(4)}<br>F Crítico = ${fCritico.toFixed(4)}<br>Valor P = ${pValor.toFixed(4)}<br><b>${conclusion}</b>`;
                 document.getElementById('res_f').classList.remove('d-none');
-            } catch (error) { alert("Error en Prueba F: Revisa los datos."); }
+            } catch (error) { alert("Error en Prueba F."); }
         }
 
-        // --- PESTAÑA 3: POTENCIA Y MUESTRA ---
         function calcPotencia() {
             try {
-                let d0 = parseFloat(document.getElementById('p_d0').value);
-                let d1 = parseFloat(document.getElementById('p_d1').value);
-                let sumvar = parseFloat(document.getElementById('p_sumvar').value);
-                let alfa = parseFloat(document.getElementById('p_alfa').value);
+                let d0 = parseFloat(document.getElementById('p_d0').value), d1 = parseFloat(document.getElementById('p_d1').value);
+                let sumvar = parseFloat(document.getElementById('p_sumvar').value), alfa = parseFloat(document.getElementById('p_alfa').value);
                 let n = parseFloat(document.getElementById('p_n').value); 
-                
-                let se = Math.sqrt(sumvar / n); 
-                let zAlfa = jStat.normal.inv(1-alfa, 0, 1);
-                let vC = d0 + (zAlfa * se); 
-                let zBeta = (vC - d1) / se;
-                let potencia = 1 - jStat.normal.cdf(zBeta, 0, 1);
-                
+                let se = Math.sqrt(sumvar / n); let zAlfa = jStat.normal.inv(1-alfa, 0, 1);
+                let vC = d0 + (zAlfa * se); let zBeta = (vC - d1) / se; let potencia = 1 - jStat.normal.cdf(zBeta, 0, 1);
                 document.getElementById('res_potencia').innerHTML = `Valor Crítico (Vc) = ${vC.toFixed(4)}<br>Z(β) = ${zBeta.toFixed(4)}<br><b>Potencia (1-β) = ${(potencia*100).toFixed(2)}%</b>`;
                 document.getElementById('res_potencia').classList.remove('d-none');
             } catch (error) { alert("Error al calcular potencia."); }
@@ -294,38 +257,48 @@
 
         function calcMuestra() {
             try {
-                let d0 = parseFloat(document.getElementById('p_d0').value);
-                let d1 = parseFloat(document.getElementById('p_d1').value);
-                let sumvar = parseFloat(document.getElementById('p_sumvar').value);
-                let alfa = parseFloat(document.getElementById('p_alfa').value);
+                let d0 = parseFloat(document.getElementById('p_d0').value), d1 = parseFloat(document.getElementById('p_d1').value);
+                let sumvar = parseFloat(document.getElementById('p_sumvar').value), alfa = parseFloat(document.getElementById('p_alfa').value);
                 let pot = parseFloat(document.getElementById('p_potDeseada').value);
-                
-                let zAlfa = jStat.normal.inv(1-alfa, 0, 1); 
-                let zBeta = jStat.normal.inv(1-pot, 0, 1); 
+                let zAlfa = jStat.normal.inv(1-alfa, 0, 1), zBeta = jStat.normal.inv(1-pot, 0, 1); 
                 let n = (Math.pow(zAlfa - zBeta, 2) * sumvar) / Math.pow(d1 - d0, 2);
-                
                 document.getElementById('res_muestra').innerHTML = `Z(α) = ${zAlfa.toFixed(3)}, Z(β) = ${zBeta.toFixed(3)}<br>n calculado = ${n.toFixed(4)}<br><b>Redondeado (n) = ${Math.ceil(n)}</b>`;
                 document.getElementById('res_muestra').classList.remove('d-none');
-            } catch (error) { alert("Error al calcular tamaño de muestra."); }
+            } catch (error) { alert("Error al calcular tamaño."); }
         }
 
         function calcIncisoG() {
             try {
-                let d0 = parseFloat(document.getElementById('p_d0').value);
-                let sumvar = parseFloat(document.getElementById('p_sumvar').value);
-                let n = parseFloat(document.getElementById('p_n').value);
-                let vc = parseFloat(document.getElementById('p_vc').value);
-                
-                let se = Math.sqrt(sumvar / n); 
-                let z = (vc - d0) / se;
-                let prob = 1 - jStat.normal.cdf(z, 0, 1);
-                
+                let d0 = parseFloat(document.getElementById('p_d0').value), sumvar = parseFloat(document.getElementById('p_sumvar').value);
+                let n = parseFloat(document.getElementById('p_n').value), vc = parseFloat(document.getElementById('p_vc').value);
+                let se = Math.sqrt(sumvar / n), z = (vc - d0) / se, prob = 1 - jStat.normal.cdf(z, 0, 1);
                 document.getElementById('res_incisoG').innerHTML = `Z calculado = ${z.toFixed(4)}<br><b>Probabilidad = ${(prob*100).toFixed(2)}%</b>`;
                 document.getElementById('res_incisoG').classList.remove('d-none');
             } catch (error) { alert("Error en Inciso G."); }
         }
 
-        // --- PESTAÑA 4: SUPUESTOS ANOVA (MANUAL ORDEN CON VECTOR Y MEDIA GLOBAL) ---
+        // ===============================================
+        // FUNCIONES AUXILIARES PARA HOMOCEDASTICIDAD
+        // ===============================================
+        // Función interna para calcular ANOVA de 1 vía y retornar el Estadístico F
+        function calcularF_Anova(grupos) {
+            let n_total = 0; let k = grupos.length;
+            let sum_all = 0;
+            for(let g of grupos) { n_total += g.length; for(let v of g) sum_all += v; }
+            let grand_mean = sum_all / n_total;
+            
+            let sst = 0; let sse = 0;
+            for(let g of grupos) {
+                let g_mean = jStat.mean(g);
+                sst += g.length * Math.pow(g_mean - grand_mean, 2);
+                for(let v of g) { sse += Math.pow(v - g_mean, 2); }
+            }
+            let mst = sst / (k - 1);
+            let mse = sse / (n_total - k);
+            return mst / mse;
+        }
+
+        // --- PESTAÑA 4: SUPUESTOS ANOVA COMPLETA ---
         function calcSupuestos() {
             try {
                 let rawText = document.getElementById('anova_datos').value.trim();
@@ -335,8 +308,9 @@
                 if(!rawText) { alert("Ingresa los datos del experimento."); return; }
                 
                 let lineas = rawText.split('\n');
-                let allErrors = []; // Almacena { err: valor, ord: indice }
-                let allYValues = []; // Almacena los valores Y originales para la Media Global
+                let allErrors = []; 
+                let allYValues = []; 
+                let tratamientosRaw = []; // Almacena los valores crudos por tratamiento
                 let htmlOutput = "";
                 let hasOrder = false;
                 
@@ -355,6 +329,7 @@
                     if(partes.length === 0) continue;
                     
                     let valoresFila = [];
+                    let rawTratamiento = [];
                     for(let p of partes) {
                         let desglose = p.split(':');
                         let v = parseFloat(desglose[0]);
@@ -364,10 +339,12 @@
                         if(o !== null && !isNaN(o)) hasOrder = true;
                         
                         valoresFila.push({ val: v, ord: o });
+                        rawTratamiento.push(v);
                     }
                     if(valoresFila.length === 0) continue;
                     
-                    // Extraer los valores Y puros para acumularlos
+                    tratamientosRaw.push(rawTratamiento); // Para Homocedasticidad
+                    
                     let rowYVals = valoresFila.map(x => x.val);
                     allYValues.push(...rowYVals);
                     
@@ -390,13 +367,14 @@
                     </tr>`;
                     trtCount++;
                 }
-                
                 htmlOutput += `</tbody></table></div>`;
                 
                 let n = allErrors.length;
-                if(n < 4) { alert("Se requieren al menos 4 datos para correr las pruebas."); return; }
+                let k_grupos = tratamientosRaw.length;
+                if(n < 4) { alert("Se requieren al menos 4 datos en total."); return; }
+                if(k_grupos < 2) { alert("Debes ingresar al menos 2 tratamientos en líneas separadas para evaluar varianzas."); return; }
 
-                // --- AGREGAR LA MEDIA GLOBAL (Y̿) ---
+                // --- MEDIA GLOBAL (Y̿) ---
                 let grandMean = jStat.mean(allYValues);
                 htmlOutput += `
                 <div class="alert alert-light border border-secondary text-center py-2 mb-4 shadow-sm">
@@ -404,35 +382,27 @@
                     <span class="text-primary fw-bold fs-5 ms-2">${grandMean.toFixed(4)}</span>
                 </div>`;
 
-                // --- 1. ALEATORIEDAD (RACHAS) ---
+                // --- VECTOR VISUAL DE ERRORES (PARA RACHAS) ---
                 let erroresRachas = [...allErrors];
-                let msjOrden = "";
+                if(hasOrder) erroresRachas.sort((a,b) => (a.ord || 0) - (b.ord || 0));
                 
-                if(hasOrder) {
-                    erroresRachas.sort((a,b) => (a.ord || 0) - (b.ord || 0));
-                    msjOrden = "<br><span class='badge bg-success mt-2 mb-2'>Datos alineados temporalmente (por las posiciones indicadas)</span>";
-                } else {
-                    msjOrden = "<br><span class='badge bg-secondary mt-2 mb-2'>Datos evaluados en orden de lectura (No se indicó posición)</span>";
-                }
-                
-                // --- AGREGAR EL VECTOR VISUAL DE ERRORES ---
-                let vectorHtml = `
-                <div class="p-3 mb-3 bg-white border border-info rounded text-center shadow-sm" style="font-family: monospace; font-size: 0.95rem;">
-                    <div class="fw-bold text-info mb-2" style="font-family: sans-serif;">Vector Lineal de Errores (Orden de Lectura Temporal)</div>
+                htmlOutput += `
+                <div class="p-3 mb-3 bg-white border border-dark rounded text-center shadow-sm" style="font-family: monospace; font-size: 0.95rem;">
+                    <div class="fw-bold text-dark mb-2" style="font-family: sans-serif;">Vector Lineal de Errores (Orden de Lectura Temporal)</div>
                     <div class="d-flex flex-wrap justify-content-center gap-2">
                     ${erroresRachas.map(x => {
                         let errFmt = (x.err > 0 ? '+' : '') + x.err.toFixed(3);
                         let color = x.err > 0 ? 'text-danger' : 'text-primary';
                         let ordLabel = hasOrder ? `<sub class="text-success fw-bold">${x.ord}</sub>` : '';
-                        return `<span class="bg-light border px-2 py-1 rounded shadow-sm"><span class="${color}">${errFmt}</span>${ordLabel}</span>`;
+                        return `<span class="bg-light border border-secondary px-2 py-1 rounded"><span class="${color}">${errFmt}</span>${ordLabel}</span>`;
                     }).join('')}
                     </div>
                 </div>`;
-                
-                htmlOutput += vectorHtml;
-                
+
+                // ==============================================
+                // 1. ALEATORIEDAD (RACHAS - Bloque Abierto)
+                // ==============================================
                 let arrRachas = erroresRachas.map(x => x.err);
-                
                 let umbral = 0;
                 if(tipoUmbral === 'mediana') {
                     let sorted_r = [...arrRachas].sort((a,b)=>a-b);
@@ -444,8 +414,9 @@
                 for(let x of arrRachas) { if(x > umbral) signos.push('+'); else if(x < umbral) signos.push('-'); }
                 let n1 = signos.filter(x => x==='+').length, n2 = signos.filter(x => x==='-').length;
                 
+                let htmlRachas = "";
                 if(n1 === 0 || n2 === 0) {
-                    htmlOutput += `<div class="test-section test-rachas shadow-sm"><b>1. Aleatoriedad (Rachas):</b> Error, insuficientes variaciones de signo.</div>`;
+                    htmlRachas = `<b>Error:</b> Insuficientes variaciones de signo.`;
                 } else {
                     let R = 1; for(let i = 1; i < signos.length; i++) { if(signos[i] !== signos[i-1]) R++; }
                     let muR = ((2 * n1 * n2) / (n1 + n2)) + 1;
@@ -454,77 +425,162 @@
                     let pValorR = 2 * (1 - jStat.normal.cdf(Math.abs(zR), 0, 1));
                     let concR = (pValorR < alfa) ? "<span class='text-danger'>SE RECHAZA (Patrón Detectado)</span>" : "<span class='text-success'>SE CUMPLE (Son Aleatorios)</span>";
                     
-                    htmlOutput += `
-                    <div class="test-section test-rachas shadow-sm">
-                        <h6 class="text-dark fw-bold">Supuesto 1: Aleatoriedad (Prueba de Rachas) ${msjOrden}</h6>
+                    htmlRachas = `
                         Rachas observadas (R) = ${R} | Esperadas (μ) = ${muR.toFixed(2)}<br>
                         Estadístico Z₀ = ${zR.toFixed(4)} | Valor P = ${pValorR.toFixed(4)}<br>
                         <b>Conclusión: ${concR}</b>
-                    </div>`;
+                    `;
                 }
+                
+                htmlOutput += `<div class="card p-3 mb-3 border border-dark shadow-sm">
+                    <h6 class="text-dark fw-bold">1. Supuesto de Aleatoriedad (Rachas)</h6>
+                    <div class="small">${htmlRachas}</div>
+                </div>`;
 
-                // --- 2. NORMALIDAD ---
-                let meanE = jStat.mean(arrRachas);
-                let stdE = jStat.stdev(arrRachas, true); 
-                
-                let sum2 = 0, sum3 = 0, sum4 = 0;
-                for(let x of arrRachas) {
-                    let dev = x - meanE;
-                    sum2 += Math.pow(dev, 2); sum3 += Math.pow(dev, 3); sum4 += Math.pow(dev, 4);
-                }
-                
-                let m2 = sum2 / n, m3 = sum3 / n, m4 = sum4 / n;
-                let skewness = m3 / Math.pow(m2, 1.5);
-                let kurtosis = m4 / Math.pow(m2, 2); 
-                let excessKurtosis = kurtosis - 3;
+                // ==============================================
+                // 2. NORMALIDAD (ACORDEÓN DESPLEGABLE)
+                // ==============================================
+                let meanE = jStat.mean(arrRachas); let stdE = jStat.stdev(arrRachas, true); 
+                let sum2=0, sum3=0, sum4=0;
+                for(let x of arrRachas) { let dev=x-meanE; sum2+=Math.pow(dev,2); sum3+=Math.pow(dev,3); sum4+=Math.pow(dev,4); }
+                let m2=sum2/n, m3=sum3/n, m4=sum4/n;
+                let skewness=m3/Math.pow(m2,1.5), kurtosis=m4/Math.pow(m2,2), excessKurtosis=kurtosis-3;
 
                 // Jarque-Bera
                 let jbStat = (n / 6) * (Math.pow(skewness, 2) + (Math.pow(excessKurtosis, 2) / 4));
                 let pValorJB = 1 - jStat.chisquare.cdf(jbStat, 2);
                 let concJB = (pValorJB < alfa) ? "<span class='text-danger'>Rechaza Normalidad</span>" : "<span class='text-success'>Cumple Normalidad</span>";
                 
-                htmlOutput += `
-                <div class="test-section test-jb shadow-sm">
-                    <h6 class="text-primary fw-bold">Supuesto 2.A: Normalidad (Jarque-Bera)</h6>
-                    Asimetría = ${skewness.toFixed(4)} | Curtosis Exceso = ${excessKurtosis.toFixed(4)}<br>
-                    Estadístico JB = ${jbStat.toFixed(4)} | Valor P = ${pValorJB.toFixed(4)}<br>
-                    <b>Conclusión: ${concJB}</b>
-                </div>`;
-
                 // D'Agostino
-                let zSkew = skewness / Math.sqrt(6/n);
-                let zKurt = excessKurtosis / Math.sqrt(24/n);
+                let zSkew = skewness / Math.sqrt(6/n), zKurt = excessKurtosis / Math.sqrt(24/n);
                 let k2Stat = Math.pow(zSkew, 2) + Math.pow(zKurt, 2);
                 let pValorDA = 1 - jStat.chisquare.cdf(k2Stat, 2);
                 let concDA = (pValorDA < alfa) ? "<span class='text-danger'>Rechaza Normalidad</span>" : "<span class='text-success'>Cumple Normalidad</span>";
                 
-                htmlOutput += `
-                <div class="test-section test-da shadow-sm">
-                    <h6 class="text-success fw-bold">Supuesto 2.B: Normalidad (D'Agostino K²)</h6>
-                    Z(Sesgo) = ${zSkew.toFixed(4)} | Z(Curt) = ${zKurt.toFixed(4)}<br>
-                    Estadístico K² = ${k2Stat.toFixed(4)} | Valor P = ${pValorDA.toFixed(4)}<br>
-                    <b>Conclusión: ${concDA}</b>
-                </div>`;
-
-                // Kolmogorov-Smirnov
-                let sortedE = [...arrRachas].sort((a,b)=>a-b);
-                let maxD = 0;
+                // K-S
+                let sortedE = [...arrRachas].sort((a,b)=>a-b); let maxD = 0;
                 for(let i=0; i<n; i++) {
-                    let empCDF_left = i/n;
-                    let empCDF_right = (i+1)/n;
+                    let empCDF_left = i/n, empCDF_right = (i+1)/n;
                     let normCDF = jStat.normal.cdf(sortedE[i], meanE, stdE);
                     maxD = Math.max(maxD, Math.abs(empCDF_right - normCDF), Math.abs(empCDF_left - normCDF));
                 }
-                
                 let ksCritico = Math.sqrt(-0.5 * Math.log(alfa / 2)) / Math.sqrt(n); 
                 let concKS = (maxD > ksCritico) ? "<span class='text-danger'>Rechaza Normalidad</span>" : "<span class='text-success'>Cumple Normalidad</span>";
 
                 htmlOutput += `
-                <div class="test-section test-ks shadow-sm">
-                    <h6 class="text-warning fw-bold" style="color: #fd7e14 !important;">Supuesto 2.C: Normalidad (Kolmogorov-Smirnov)</h6>
-                    Distancia Máxima (D) = ${maxD.toFixed(4)}<br>
-                    D Crítico (para α=${alfa}) ≈ ${ksCritico.toFixed(4)}<br>
-                    <b>Conclusión: ${concKS}</b>
+                <div class="accordion mb-3 shadow-sm" id="accordionNormalidad">
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="headNormalidad">
+                            <button class="accordion-button collapsed fw-bold text-primary" type="button" data-bs-toggle="collapse" data-bs-target="#collapseNormalidad">
+                                2. Supuesto de Normalidad (3 Pruebas)
+                            </button>
+                        </h2>
+                        <div id="collapseNormalidad" class="accordion-collapse collapse" data-bs-parent="#accordionNormalidad">
+                            <div class="accordion-body bg-light small">
+                                <div class="test-card border-jb bg-white p-2">
+                                    <h6 class="text-primary fw-bold">A) Prueba de Jarque-Bera</h6>
+                                    Asimetría = ${skewness.toFixed(4)} | Curtosis = ${excessKurtosis.toFixed(4)}<br>
+                                    Estadístico JB = ${jbStat.toFixed(4)} | Valor P = ${pValorJB.toFixed(4)}<br>
+                                    <b>Conclusión: ${concJB}</b>
+                                </div>
+                                <div class="test-card border-da bg-white p-2">
+                                    <h6 class="text-success fw-bold">B) Prueba de D'Agostino (K²)</h6>
+                                    Z(Sesgo) = ${zSkew.toFixed(4)} | Z(Curt) = ${zKurt.toFixed(4)}<br>
+                                    Estadístico K² = ${k2Stat.toFixed(4)} | Valor P = ${pValorDA.toFixed(4)}<br>
+                                    <b>Conclusión: ${concDA}</b>
+                                </div>
+                                <div class="test-card border-ks bg-white p-2">
+                                    <h6 class="fw-bold" style="color: #fd7e14;">C) Prueba de Kolmogorov-Smirnov</h6>
+                                    D Máxima = ${maxD.toFixed(4)} | D Crítico (α=${alfa}) ≈ ${ksCritico.toFixed(4)}<br>
+                                    <b>Conclusión: ${concKS}</b>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+
+                // ==============================================
+                // 3. HOMOCEDASTICIDAD (ACORDEÓN DESPLEGABLE)
+                // ==============================================
+                
+                // Bartlett
+                let sum_inv_df = 0, sp2_num = 0; let vars = [], ni_arr = [];
+                let canBartlett = true;
+                for(let t of tratamientosRaw) {
+                    if(t.length < 2) { canBartlett = false; break; }
+                    let ni = t.length; ni_arr.push(ni);
+                    let v = jStat.variance(t, true); // Varianza muestral
+                    vars.push(v);
+                    sp2_num += (ni - 1) * v;
+                    sum_inv_df += 1 / (ni - 1);
+                }
+                
+                let htmlBartlett = "";
+                if(!canBartlett) {
+                    htmlBartlett = "Requiere al menos 2 datos por tratamiento.";
+                } else {
+                    let sp2 = sp2_num / (n - k_grupos);
+                    let term1 = (n - k_grupos) * Math.log(sp2);
+                    let term2 = 0;
+                    for(let i=0; i<k_grupos; i++) { term2 += (ni_arr[i] - 1) * Math.log(vars[i]); }
+                    let C = 1 + (1 / (3 * (k_grupos - 1))) * (sum_inv_df - (1 / (n - k_grupos)));
+                    let bartlett_chi = (term1 - term2) / C;
+                    let pValorBart = 1 - jStat.chisquare.cdf(bartlett_chi, k_grupos - 1);
+                    let concBart = (pValorBart < alfa) ? "<span class='text-danger'>Rechaza Homogeneidad</span>" : "<span class='text-success'>Cumple Homogeneidad</span>";
+                    
+                    htmlBartlett = `
+                        Estadístico χ² = ${bartlett_chi.toFixed(4)} | Grados de Libertad = ${k_grupos - 1}<br>
+                        Valor P = ${pValorBart.toFixed(4)}<br>
+                        <b>Conclusión: ${concBart}</b>
+                    `;
+                }
+
+                // Levene (Media)
+                let dataLevene = tratamientosRaw.map(t => {
+                    let m = jStat.mean(t); return t.map(v => Math.abs(v - m));
+                });
+                let leveneF = calcularF_Anova(dataLevene);
+                let pValorLev = 1 - jStat.centralF.cdf(leveneF, k_grupos - 1, n - k_grupos);
+                let concLev = (pValorLev < alfa) ? "<span class='text-danger'>Rechaza Homogeneidad</span>" : "<span class='text-success'>Cumple Homogeneidad</span>";
+
+                // Brown-Forsythe (Mediana)
+                let dataBF = tratamientosRaw.map(t => {
+                    let sorted_t = [...t].sort((a,b)=>a-b);
+                    let mid = Math.floor(sorted_t.length/2);
+                    let med = sorted_t.length % 2 !== 0 ? sorted_t[mid] : (sorted_t[mid-1] + sorted_t[mid])/2;
+                    return t.map(v => Math.abs(v - med));
+                });
+                let bfF = calcularF_Anova(dataBF);
+                let pValorBF = 1 - jStat.centralF.cdf(bfF, k_grupos - 1, n - k_grupos);
+                let concBF = (pValorBF < alfa) ? "<span class='text-danger'>Rechaza Homogeneidad</span>" : "<span class='text-success'>Cumple Homogeneidad</span>";
+
+                htmlOutput += `
+                <div class="accordion mb-3 shadow-sm" id="accordionHomocedasticidad">
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="headHomocedasticidad">
+                            <button class="accordion-button collapsed fw-bold text-danger" type="button" data-bs-toggle="collapse" data-bs-target="#collapseHomocedasticidad">
+                                3. Supuesto de Homocedasticidad (Igualdad de Varianzas)
+                            </button>
+                        </h2>
+                        <div id="collapseHomocedasticidad" class="accordion-collapse collapse" data-bs-parent="#accordionHomocedasticidad">
+                            <div class="accordion-body bg-light small">
+                                <div class="test-card border-bartlett bg-white p-2">
+                                    <h6 class="text-danger fw-bold">A) Prueba de Bartlett (Clásica)</h6>
+                                    ${htmlBartlett}
+                                </div>
+                                <div class="test-card border-levene bg-white p-2">
+                                    <h6 class="text-info fw-bold">B) Prueba de Levene (Basada en Media)</h6>
+                                    Estadístico F₀ = ${leveneF.toFixed(4)} | Valor P = ${pValorLev.toFixed(4)}<br>
+                                    <b>Conclusión: ${concLev}</b>
+                                </div>
+                                <div class="test-card border-bf bg-white p-2">
+                                    <h6 class="fw-bold" style="color: #6610f2;">C) Prueba de Brown-Forsythe (Robusta - Mediana)</h6>
+                                    Estadístico F₀ = ${bfF.toFixed(4)} | Valor P = ${pValorBF.toFixed(4)}<br>
+                                    <b>Conclusión: ${concBF}</b>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>`;
 
                 let resDiv = document.getElementById('res_anova');
@@ -532,7 +588,7 @@
                 resDiv.classList.remove('d-none');
 
             } catch (error) { 
-                alert("Error de sintaxis. Verifica el formato de los datos ingresados."); 
+                alert("Error de procesamiento. Verifica el formato de tus datos."); 
                 console.error(error);
             }
         }
@@ -541,27 +597,16 @@
         function toggleDfTablas() {
             try {
                 let dist = document.getElementById('t_dist').value;
-                let divSimple = document.getElementById('div_df_simple');
-                let divDoble = document.getElementById('div_df_doble');
-                
-                divSimple.classList.add('d-none'); 
-                divDoble.classList.add('d-none');
-                
-                if(dist === 't' || dist === 'chi') {
-                    divSimple.classList.remove('d-none');
-                } else if(dist === 'f') {
-                    divDoble.classList.remove('d-none');
-                }
+                let divSimple = document.getElementById('div_df_simple'), divDoble = document.getElementById('div_df_doble');
+                divSimple.classList.add('d-none'); divDoble.classList.add('d-none');
+                if(dist === 't' || dist === 'chi') divSimple.classList.remove('d-none');
+                else if(dist === 'f') divDoble.classList.remove('d-none');
             } catch(e) {}
         }
 
         function calcCritico() {
             try {
-                let dist = document.getElementById('t_dist').value;
-                let alfa = parseFloat(document.getElementById('t_alfa').value);
-                let cola = document.getElementById('t_cola').value;
-                let res = "";
-                
+                let dist = document.getElementById('t_dist').value, alfa = parseFloat(document.getElementById('t_alfa').value), cola = document.getElementById('t_cola').value, res = "";
                 if(dist === 'z') {
                     if(cola === 'bilateral') res = `± ${jStat.normal.inv(1 - alfa/2, 0, 1).toFixed(4)}`;
                     else if(cola === 'derecha') res = `+ ${jStat.normal.inv(1 - alfa, 0, 1).toFixed(4)}`;
@@ -577,26 +622,19 @@
                     else if(cola === 'derecha') res = `${jStat.chisquare.inv(1 - alfa, df).toFixed(4)}`;
                     else res = `${jStat.chisquare.inv(alfa, df).toFixed(4)}`;
                 } else if(dist === 'f') {
-                    let df1 = parseFloat(document.getElementById('t_df1').value);
-                    let df2 = parseFloat(document.getElementById('t_df2').value);
+                    let df1 = parseFloat(document.getElementById('t_df1').value), df2 = parseFloat(document.getElementById('t_df2').value);
                     if(cola === 'bilateral') res = `<div class="fs-6 text-start">Inferior: <b>${jStat.centralF.inv(alfa/2, df1, df2).toFixed(4)}</b><br>Superior: <b>${jStat.centralF.inv(1 - alfa/2, df1, df2).toFixed(4)}</b></div>`;
                     else if(cola === 'derecha') res = `${jStat.centralF.inv(1 - alfa, df1, df2).toFixed(4)}`;
                     else res = `${jStat.centralF.inv(alfa, df1, df2).toFixed(4)}`;
                 }
-                
                 document.getElementById('res_critico').innerHTML = `<span class="text-muted fs-6">Valor Crítico:</span><br><b>${res}</b>`;
-                document.getElementById('res_critico').classList.remove('d-none');
-                document.getElementById('res_pvalor').classList.add('d-none'); 
-            } catch(error) { alert("Error calculando Valor Crítico. Verifica grados de libertad."); }
+                document.getElementById('res_critico').classList.remove('d-none'); document.getElementById('res_pvalor').classList.add('d-none'); 
+            } catch(error) { alert("Error calculando Valor Crítico."); }
         }
 
         function calcPValor() {
             try {
-                let dist = document.getElementById('t_dist').value;
-                let val = parseFloat(document.getElementById('t_stat').value);
-                let cola = document.getElementById('t_cola').value;
-                let p = 0;
-                
+                let dist = document.getElementById('t_dist').value, val = parseFloat(document.getElementById('t_stat').value), cola = document.getElementById('t_cola').value, p = 0;
                 if(dist === 'z') {
                     if(cola === 'derecha') p = 1 - jStat.normal.cdf(val, 0, 1);
                     else if(cola === 'izquierda') p = jStat.normal.cdf(val, 0, 1);
@@ -607,24 +645,19 @@
                     else if(cola === 'izquierda') p = jStat.studentt.cdf(val, df);
                     else p = 2 * (1 - jStat.studentt.cdf(Math.abs(val), df));
                 } else if(dist === 'chi') {
-                    let df = parseFloat(document.getElementById('t_df').value);
-                    let cdf = jStat.chisquare.cdf(val, df);
+                    let df = parseFloat(document.getElementById('t_df').value), cdf = jStat.chisquare.cdf(val, df);
                     if(cola === 'derecha') p = 1 - cdf;
                     else if(cola === 'izquierda') p = cdf;
                     else p = 2 * Math.min(cdf, 1 - cdf);
                 } else if(dist === 'f') {
-                    let df1 = parseFloat(document.getElementById('t_df1').value);
-                    let df2 = parseFloat(document.getElementById('t_df2').value);
-                    let cdf = jStat.centralF.cdf(val, df1, df2);
+                    let df1 = parseFloat(document.getElementById('t_df1').value), df2 = parseFloat(document.getElementById('t_df2').value), cdf = jStat.centralF.cdf(val, df1, df2);
                     if(cola === 'derecha') p = 1 - cdf;
                     else if(cola === 'izquierda') p = cdf;
                     else p = 2 * Math.min(cdf, 1 - cdf);
                 }
-                
                 document.getElementById('res_pvalor').innerHTML = `<span class="text-muted fs-6">Probabilidad (Valor P):</span><br><b>${p.toFixed(5)}</b><br><span class="fs-6 text-secondary">(${ (p*100).toFixed(3) }%)</span>`;
-                document.getElementById('res_pvalor').classList.remove('d-none');
-                document.getElementById('res_critico').classList.add('d-none'); 
-            } catch(error) { alert("Error calculando el p-Valor. Verifica los datos."); }
+                document.getElementById('res_pvalor').classList.remove('d-none'); document.getElementById('res_critico').classList.add('d-none'); 
+            } catch(error) { alert("Error calculando el p-Valor."); }
         }
     </script>
 </body>
