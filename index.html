@@ -39,7 +39,7 @@
             <li class="nav-item" role="presentation"><button class="nav-link active" data-bs-toggle="pill" data-bs-target="#tab-medias" type="button">Medias</button></li>
             <li class="nav-item" role="presentation"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#tab-varianzas" type="button">Varianzas</button></li>
             <li class="nav-item" role="presentation"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#tab-potencia" type="button">Potencia</button></li>
-            <li class="nav-item" role="presentation"><button class="nav-link tab-anova fw-bold" data-bs-toggle="pill" data-bs-target="#tab-anova" type="button">Supuestos ANOVA</button></li>
+            <li class="nav-item" role="presentation"><button class="nav-link tab-anova fw-bold" data-bs-toggle="pill" data-bs-target="#tab-anova" type="button">Supuestos y ANOVA</button></li>
             <li class="nav-item" role="presentation"><button class="nav-link tab-tablas fw-bold" data-bs-toggle="pill" data-bs-target="#tab-tablas" type="button">Tablas / p-Valor</button></li>
         </ul>
 
@@ -131,13 +131,13 @@
                 </div>
             </div>
 
-            <!-- ================= PESTAÑA 4: SUPUESTOS ANOVA ================= -->
+            <!-- ================= PESTAÑA 4: SUPUESTOS Y ANOVA ================= -->
             <div class="tab-pane fade" id="tab-anova" role="tabpanel">
                 <div class="card p-3 border-dark" style="background-color: #f1ecf9;">
-                    <h5 class="text-dark fw-bold" style="color: #6f42c1 !important;">Extracción de Errores y Diagnóstico</h5>
-                    <p class="text-muted small mb-2">Ingresa los datos del experimento. <b>Escribe un Tratamiento por línea</b>. Para la prueba de rachas, asigna el orden temporal usando el formato <code>Valor:Orden</code>.</p>
+                    <h5 class="text-dark fw-bold" style="color: #6f42c1 !important;">Extracción, Supuestos y Tabla ANOVA</h5>
+                    <p class="text-muted small mb-2">Ingresa los datos del experimento. <b>Escribe un Tratamiento por línea</b>. Para la prueba de rachas, asigna el orden usando <code>Valor:Orden</code> (ej. 871:7).</p>
                     
-                    <textarea id="anova_datos" class="form-control mb-3" rows="5" placeholder="Ejemplo de la pizarra:&#10;871:7, 869:9, 872:12, 870:3&#10;867:10, 866:1, 868:11, 865:5&#10;874:2, 875:8, 873:6, 868:4"></textarea>
+                    <textarea id="anova_datos" class="form-control mb-3" rows="5" placeholder="Ejemplo:&#10;871:7, 869:9, 872:12, 870:3&#10;867:10, 866:1, 868:11, 865:5&#10;874:2, 875:8, 873:6, 868:4"></textarea>
 
                     <div class="row g-2 mb-3">
                         <div class="col-6">
@@ -149,7 +149,7 @@
                             <input type="number" id="anova_alfa" class="form-control" value="0.05" step="any">
                         </div>
                     </div>
-                    <button class="btn w-100 fw-bold text-white mb-3 shadow" style="background-color: #6f42c1;" onclick="calcSupuestos()">Generar Errores y Evaluar Supuestos</button>
+                    <button class="btn w-100 fw-bold text-white mb-3 shadow" style="background-color: #6f42c1;" onclick="calcSupuestos()">Analizar Diseño (Errores, Supuestos y ANOVA)</button>
                     
                     <!-- Contenedor de Resultados Dinámicos -->
                     <div id="res_anova" class="d-none"></div>
@@ -189,7 +189,7 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
     <!-- ==============================================
-         TODAS LAS FUNCIONES JAVASCRIPT
+         TODAS LAS FUNCIONES JAVASCRIPT COMPLETAS
          ============================================== -->
     <script>
         function calcMedias() {
@@ -277,28 +277,23 @@
             } catch (error) { alert("Error en Inciso G."); }
         }
 
-        // ===============================================
-        // FUNCIONES AUXILIARES PARA HOMOCEDASTICIDAD
-        // ===============================================
-        // Función interna para calcular ANOVA de 1 vía y retornar el Estadístico F
         function calcularF_Anova(grupos) {
-            let n_total = 0; let k = grupos.length;
-            let sum_all = 0;
+            let n_total = 0; let k = grupos.length; let sum_all = 0;
             for(let g of grupos) { n_total += g.length; for(let v of g) sum_all += v; }
             let grand_mean = sum_all / n_total;
-            
             let sst = 0; let sse = 0;
             for(let g of grupos) {
                 let g_mean = jStat.mean(g);
                 sst += g.length * Math.pow(g_mean - grand_mean, 2);
                 for(let v of g) { sse += Math.pow(v - g_mean, 2); }
             }
-            let mst = sst / (k - 1);
-            let mse = sse / (n_total - k);
+            let mst = sst / (k - 1); let mse = sse / (n_total - k);
             return mst / mse;
         }
 
-        // --- PESTAÑA 4: SUPUESTOS ANOVA COMPLETA ---
+        // ==============================================
+        // PESTAÑA 4: SUPUESTOS Y TABLA ANOVA (COMPLETA)
+        // ==============================================
         function calcSupuestos() {
             try {
                 let rawText = document.getElementById('anova_datos').value.trim();
@@ -310,7 +305,7 @@
                 let lineas = rawText.split('\n');
                 let allErrors = []; 
                 let allYValues = []; 
-                let tratamientosRaw = []; // Almacena los valores crudos por tratamiento
+                let tratamientosRaw = []; 
                 let htmlOutput = "";
                 let hasOrder = false;
                 
@@ -343,7 +338,7 @@
                     }
                     if(valoresFila.length === 0) continue;
                     
-                    tratamientosRaw.push(rawTratamiento); // Para Homocedasticidad
+                    tratamientosRaw.push(rawTratamiento); 
                     
                     let rowYVals = valoresFila.map(x => x.val);
                     allYValues.push(...rowYVals);
@@ -372,7 +367,7 @@
                 let n = allErrors.length;
                 let k_grupos = tratamientosRaw.length;
                 if(n < 4) { alert("Se requieren al menos 4 datos en total."); return; }
-                if(k_grupos < 2) { alert("Debes ingresar al menos 2 tratamientos en líneas separadas para evaluar varianzas."); return; }
+                if(k_grupos < 2) { alert("Debes ingresar al menos 2 tratamientos."); return; }
 
                 // --- MEDIA GLOBAL (Y̿) ---
                 let grandMean = jStat.mean(allYValues);
@@ -382,7 +377,7 @@
                     <span class="text-primary fw-bold fs-5 ms-2">${grandMean.toFixed(4)}</span>
                 </div>`;
 
-                // --- VECTOR VISUAL DE ERRORES (PARA RACHAS) ---
+                // --- VECTOR VISUAL DE ERRORES ---
                 let erroresRachas = [...allErrors];
                 if(hasOrder) erroresRachas.sort((a,b) => (a.ord || 0) - (b.ord || 0));
                 
@@ -400,7 +395,7 @@
                 </div>`;
 
                 // ==============================================
-                // 1. ALEATORIEDAD (RACHAS - Bloque Abierto)
+                // 1. ALEATORIEDAD (RACHAS)
                 // ==============================================
                 let arrRachas = erroresRachas.map(x => x.err);
                 let umbral = 0;
@@ -438,7 +433,7 @@
                 </div>`;
 
                 // ==============================================
-                // 2. NORMALIDAD (ACORDEÓN DESPLEGABLE)
+                // 2. NORMALIDAD
                 // ==============================================
                 let meanE = jStat.mean(arrRachas); let stdE = jStat.stdev(arrRachas, true); 
                 let sum2=0, sum3=0, sum4=0;
@@ -446,18 +441,15 @@
                 let m2=sum2/n, m3=sum3/n, m4=sum4/n;
                 let skewness=m3/Math.pow(m2,1.5), kurtosis=m4/Math.pow(m2,2), excessKurtosis=kurtosis-3;
 
-                // Jarque-Bera
                 let jbStat = (n / 6) * (Math.pow(skewness, 2) + (Math.pow(excessKurtosis, 2) / 4));
                 let pValorJB = 1 - jStat.chisquare.cdf(jbStat, 2);
                 let concJB = (pValorJB < alfa) ? "<span class='text-danger'>Rechaza Normalidad</span>" : "<span class='text-success'>Cumple Normalidad</span>";
                 
-                // D'Agostino
                 let zSkew = skewness / Math.sqrt(6/n), zKurt = excessKurtosis / Math.sqrt(24/n);
                 let k2Stat = Math.pow(zSkew, 2) + Math.pow(zKurt, 2);
                 let pValorDA = 1 - jStat.chisquare.cdf(k2Stat, 2);
                 let concDA = (pValorDA < alfa) ? "<span class='text-danger'>Rechaza Normalidad</span>" : "<span class='text-success'>Cumple Normalidad</span>";
                 
-                // K-S
                 let sortedE = [...arrRachas].sort((a,b)=>a-b); let maxD = 0;
                 for(let i=0; i<n; i++) {
                     let empCDF_left = i/n, empCDF_right = (i+1)/n;
@@ -470,7 +462,7 @@
                 htmlOutput += `
                 <div class="accordion mb-3 shadow-sm" id="accordionNormalidad">
                     <div class="accordion-item">
-                        <h2 class="accordion-header" id="headNormalidad">
+                        <h2 class="accordion-header">
                             <button class="accordion-button collapsed fw-bold text-primary" type="button" data-bs-toggle="collapse" data-bs-target="#collapseNormalidad">
                                 2. Supuesto de Normalidad (3 Pruebas)
                             </button>
@@ -500,25 +492,22 @@
                 </div>`;
 
                 // ==============================================
-                // 3. HOMOCEDASTICIDAD (ACORDEÓN DESPLEGABLE)
+                // 3. HOMOCEDASTICIDAD
                 // ==============================================
-                
-                // Bartlett
                 let sum_inv_df = 0, sp2_num = 0; let vars = [], ni_arr = [];
                 let canBartlett = true;
                 for(let t of tratamientosRaw) {
                     if(t.length < 2) { canBartlett = false; break; }
                     let ni = t.length; ni_arr.push(ni);
-                    let v = jStat.variance(t, true); // Varianza muestral
+                    let v = jStat.variance(t, true); 
                     vars.push(v);
                     sp2_num += (ni - 1) * v;
                     sum_inv_df += 1 / (ni - 1);
                 }
                 
                 let htmlBartlett = "";
-                if(!canBartlett) {
-                    htmlBartlett = "Requiere al menos 2 datos por tratamiento.";
-                } else {
+                if(!canBartlett) { htmlBartlett = "Requiere al menos 2 datos por tratamiento."; } 
+                else {
                     let sp2 = sp2_num / (n - k_grupos);
                     let term1 = (n - k_grupos) * Math.log(sp2);
                     let term2 = 0;
@@ -528,22 +517,14 @@
                     let pValorBart = 1 - jStat.chisquare.cdf(bartlett_chi, k_grupos - 1);
                     let concBart = (pValorBart < alfa) ? "<span class='text-danger'>Rechaza Homogeneidad</span>" : "<span class='text-success'>Cumple Homogeneidad</span>";
                     
-                    htmlBartlett = `
-                        Estadístico χ² = ${bartlett_chi.toFixed(4)} | Grados de Libertad = ${k_grupos - 1}<br>
-                        Valor P = ${pValorBart.toFixed(4)}<br>
-                        <b>Conclusión: ${concBart}</b>
-                    `;
+                    htmlBartlett = `Estadístico χ² = ${bartlett_chi.toFixed(4)} | df = ${k_grupos - 1}<br>Valor P = ${pValorBart.toFixed(4)}<br><b>Conclusión: ${concBart}</b>`;
                 }
 
-                // Levene (Media)
-                let dataLevene = tratamientosRaw.map(t => {
-                    let m = jStat.mean(t); return t.map(v => Math.abs(v - m));
-                });
+                let dataLevene = tratamientosRaw.map(t => { let m = jStat.mean(t); return t.map(v => Math.abs(v - m)); });
                 let leveneF = calcularF_Anova(dataLevene);
                 let pValorLev = 1 - jStat.centralF.cdf(leveneF, k_grupos - 1, n - k_grupos);
                 let concLev = (pValorLev < alfa) ? "<span class='text-danger'>Rechaza Homogeneidad</span>" : "<span class='text-success'>Cumple Homogeneidad</span>";
 
-                // Brown-Forsythe (Mediana)
                 let dataBF = tratamientosRaw.map(t => {
                     let sorted_t = [...t].sort((a,b)=>a-b);
                     let mid = Math.floor(sorted_t.length/2);
@@ -557,7 +538,7 @@
                 htmlOutput += `
                 <div class="accordion mb-3 shadow-sm" id="accordionHomocedasticidad">
                     <div class="accordion-item">
-                        <h2 class="accordion-header" id="headHomocedasticidad">
+                        <h2 class="accordion-header">
                             <button class="accordion-button collapsed fw-bold text-danger" type="button" data-bs-toggle="collapse" data-bs-target="#collapseHomocedasticidad">
                                 3. Supuesto de Homocedasticidad (Igualdad de Varianzas)
                             </button>
@@ -565,21 +546,104 @@
                         <div id="collapseHomocedasticidad" class="accordion-collapse collapse" data-bs-parent="#accordionHomocedasticidad">
                             <div class="accordion-body bg-light small">
                                 <div class="test-card border-bartlett bg-white p-2">
-                                    <h6 class="text-danger fw-bold">A) Prueba de Bartlett (Clásica)</h6>
-                                    ${htmlBartlett}
+                                    <h6 class="text-danger fw-bold">A) Prueba de Bartlett (Clásica)</h6>${htmlBartlett}
                                 </div>
                                 <div class="test-card border-levene bg-white p-2">
                                     <h6 class="text-info fw-bold">B) Prueba de Levene (Basada en Media)</h6>
-                                    Estadístico F₀ = ${leveneF.toFixed(4)} | Valor P = ${pValorLev.toFixed(4)}<br>
-                                    <b>Conclusión: ${concLev}</b>
+                                    Estadístico F₀ = ${leveneF.toFixed(4)} | Valor P = ${pValorLev.toFixed(4)}<br><b>Conclusión: ${concLev}</b>
                                 </div>
                                 <div class="test-card border-bf bg-white p-2">
                                     <h6 class="fw-bold" style="color: #6610f2;">C) Prueba de Brown-Forsythe (Robusta - Mediana)</h6>
-                                    Estadístico F₀ = ${bfF.toFixed(4)} | Valor P = ${pValorBF.toFixed(4)}<br>
-                                    <b>Conclusión: ${concBF}</b>
+                                    Estadístico F₀ = ${bfF.toFixed(4)} | Valor P = ${pValorBF.toFixed(4)}<br><b>Conclusión: ${concBF}</b>
                                 </div>
                             </div>
                         </div>
+                    </div>
+                </div>`;
+
+                // ==============================================
+                // 4. TABLA ANOVA GENERAL Y CONCLUSIÓN FINAL
+                // ==============================================
+                let sst = 0, sce = 0, sct = 0;
+                
+                // Total Sum of Squares (SST)
+                for(let y of allYValues) { sst += Math.pow(y - grandMean, 2); }
+                
+                // Error Sum of Squares (SCE)
+                for(let obj of allErrors) { sce += Math.pow(obj.err, 2); }
+                
+                // Treatment Sum of Squares (SCT)
+                sct = sst - sce;
+                if(sct < 0) sct = 0; // Prevenir errores de coma flotante
+
+                let df_t = k_grupos - 1;
+                let df_e = n - k_grupos;
+                let df_tot = n - 1;
+
+                let cm_t = sct / df_t;
+                let cm_e = sce / df_e;
+
+                let f_stat_anova = cm_t / cm_e;
+                let p_val_anova = 1 - jStat.centralF.cdf(f_stat_anova, df_t, df_e);
+                let f_crit_anova = jStat.centralF.inv(1 - alfa, df_t, df_e);
+
+                let conclusionAnova = "";
+                if (p_val_anova < alfa) {
+                    conclusionAnova = `<span class='text-danger fw-bold'>SE RECHAZA H₀</span><br><span class="text-secondary small">Hay evidencia estadística significativa de que al menos una de las medias de los tratamientos es diferente.</span>`;
+                } else {
+                    conclusionAnova = `<span class='text-success fw-bold'>NO SE RECHAZA H₀</span><br><span class="text-secondary small">No hay evidencia estadística suficiente para afirmar que las medias de los tratamientos son diferentes (se asumen iguales).</span>`;
+                }
+
+                htmlOutput += `
+                <div class="card border border-primary shadow mt-4">
+                    <div class="card-header bg-primary text-white text-center fw-bold fs-5">
+                        TABLA ANOVA
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-bordered text-center mb-0 align-middle">
+                                <thead class="table-light">
+                                    <tr class="small">
+                                        <th>Fuente de Variación</th>
+                                        <th>Suma de Cuadrados (SS)</th>
+                                        <th>Grados de Libertad (df)</th>
+                                        <th>Cuadrado Medio (MS)</th>
+                                        <th>F₀ Calculada</th>
+                                        <th>Valor p</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td class="fw-bold bg-light">Tratamientos</td>
+                                        <td>${sct.toFixed(4)}</td>
+                                        <td>${df_t}</td>
+                                        <td>${cm_t.toFixed(4)}</td>
+                                        <td class="fw-bold text-primary fs-5">${f_stat_anova.toFixed(4)}</td>
+                                        <td class="fw-bold ${(p_val_anova < alfa)?'text-danger':'text-success'}">${p_val_anova.toFixed(4)}</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="fw-bold bg-light">Error</td>
+                                        <td>${sce.toFixed(4)}</td>
+                                        <td>${df_e}</td>
+                                        <td>${cm_e.toFixed(4)}</td>
+                                        <td class="bg-light"></td>
+                                        <td class="bg-light"></td>
+                                    </tr>
+                                    <tr class="table-light border-secondary">
+                                        <td class="fw-bold">Total</td>
+                                        <td class="fw-bold">${sst.toFixed(4)}</td>
+                                        <td class="fw-bold">${df_tot}</td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="card-footer bg-white text-center py-3">
+                        <div class="mb-2 text-dark">F Crítico (α=${alfa}) = <b>${f_crit_anova.toFixed(4)}</b></div>
+                        <div class="fs-5 p-2 rounded bg-light border">${conclusionAnova}</div>
                     </div>
                 </div>`;
 
