@@ -28,6 +28,24 @@
         .border-bartlett { border-color: #dc3545; }
         .border-levene { border-color: #0dcaf0; }
         .border-bf { border-color: #6610f2; }
+        
+        /* Botón fantasma */
+        .btn-fantasma {
+            position: fixed;
+            bottom: 5px;
+            right: 10px;
+            opacity: 0.02;
+            cursor: default;
+            user-select: none;
+            font-size: 10px;
+            z-index: 9999;
+        }
+        
+        /* Estilos para las matemáticas en el Modal */
+        .math-box { background-color: #f4f6f9; border-left: 3px solid #6c757d; padding: 10px; margin-bottom: 15px; font-family: monospace; font-size: 1.1em; }
+        .math-frac { display: inline-block; vertical-align: middle; text-align: center; }
+        .math-frac > span { display: block; padding: 0.1em; }
+        .math-frac span.fdn { border-top: 1px solid black; }
     </style>
 </head>
 <body>
@@ -185,6 +203,119 @@
         </div> <!-- Fin de tab-content -->
     </div> <!-- Fin de container -->
 
+    <!-- BOTÓN OCULTO PARA EL ESTUDIANTE (EASTER EGG) -->
+    <div class="btn-fantasma" onclick="abrirFormulas()">.</div>
+
+    <!-- MODAL DE FÓRMULAS OCULTAS -->
+    <div class="modal fade" id="modalFormulas" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header bg-dark text-white">
+                    <h5 class="modal-title fw-bold">Recetario de Fórmulas Oculto</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <h5 class="text-primary border-bottom pb-1">1. Pruebas de Medias</h5>
+                    <div class="math-box">
+                        <b>Z<sub>0</sub> (Poblacional):</b><br>
+                        Z = 
+                        <div class="math-frac">
+                            <span>(X̄₁ - X̄₂) - D₀</span>
+                            <span class="fdn">√ (σ₁²/n₁ + σ₂²/n₂)</span>
+                        </div>
+                    </div>
+                    <div class="math-box">
+                        <b>T<sub>0</sub> (Muestral):</b><br>
+                        t = 
+                        <div class="math-frac">
+                            <span>(X̄₁ - X̄₂) - D₀</span>
+                            <span class="fdn">√ (S₁²/n₁ + S₂²/n₂)</span>
+                        </div>
+                        <br><i>df = n₁ + n₂ - 2</i>
+                    </div>
+
+                    <h5 class="text-primary border-bottom pb-1 mt-4">2. Pruebas de Varianzas</h5>
+                    <div class="math-box">
+                        <b>Chi-Cuadrada (1 Pob):</b> χ²₀ = (n - 1)S² / σ₀²
+                    </div>
+                    <div class="math-box">
+                        <b>Fisher F (2 Pob):</b> F₀ = (S₁² / S₂²) / Ratio H₀
+                    </div>
+
+                    <h5 class="text-primary border-bottom pb-1 mt-4">3. Potencia y Tamaño (Incisos A al G)</h5>
+                    <div class="math-box">
+                        <b>Valor Crítico (Vc):</b> Vc = H₀ + Z_α * √ (ΣV / n)
+                    </div>
+                    <div class="math-box">
+                        <b>Potencia (1 - β):</b> Z_β = (Vc - H₁) / √ (ΣV / n)
+                    </div>
+                    <div class="math-box">
+                        <b>Cálculo de 'n':</b><br>
+                        n = 
+                        <div class="math-frac">
+                            <span>(Z_α - Z_β)² * ΣVarianza</span>
+                            <span class="fdn">(H₁ - H₀)²</span>
+                        </div>
+                    </div>
+
+                    <h5 class="text-primary border-bottom pb-1 mt-4">4. Tabla ANOVA (SCT, SCE)</h5>
+                    <div class="math-box">
+                        <b>SCT (Tratamientos):</b> Σ n_i (Ȳ_i. - Ȳ_..)²<br>
+                        <i>df = k - 1</i>
+                    </div>
+                    <div class="math-box">
+                        <b>SCE (Error):</b> Σ Σ (Y_ij - Ȳ_i.)²<br>
+                        <i>df = N - k</i>
+                    </div>
+                    <div class="math-box">
+                        <b>SST (Total):</b> Σ Σ (Y_ij - Ȳ_..)²<br>
+                        <i>df = N - 1</i>
+                    </div>
+                    <div class="math-box">
+                        <b>Cuadrados Medios:</b> CM_T = SCT / df_T &nbsp;&nbsp;|&nbsp;&nbsp; CM_E = SCE / df_E
+                    </div>
+                    <div class="math-box text-danger fw-bold">
+                        F₀ Calculada = CM_T / CM_E
+                    </div>
+
+                    <h5 class="text-primary border-bottom pb-1 mt-4">5. Supuestos ANOVA</h5>
+                    <div class="math-box">
+                        <b>Aleatoriedad (Rachas):</b><br>
+                        μ_R = 
+                        <div class="math-frac">
+                            <span>2n₁n₂</span>
+                            <span class="fdn">n₁ + n₂</span>
+                        </div> + 1
+                        <br><br>
+                        σ²_R = 
+                        <div class="math-frac">
+                            <span>2n₁n₂(2n₁n₂ - n₁ - n₂)</span>
+                            <span class="fdn">(n₁ + n₂)²(n₁ + n₂ - 1)</span>
+                        </div>
+                        <br><br>
+                        Z₀ = (R - μ_R) / σ_R
+                    </div>
+                    <div class="math-box">
+                        <b>Normalidad (Jarque-Bera):</b><br>
+                        JB = (n / 6) * [ Sesgo² + (CurtosisExceso² / 4) ]
+                    </div>
+                    <div class="math-box">
+                        <b>Normalidad (D'Agostino K²):</b><br>
+                        K² = Z(Sesgo)² + Z(Curtosis)²
+                    </div>
+                    <div class="math-box">
+                        <b>Homocedasticidad (Bartlett):</b><br>
+                        χ²₀ = 
+                        <div class="math-frac">
+                            <span>(N-k)ln(S²_p) - Σ(n_i - 1)ln(S²_i)</span>
+                            <span class="fdn">1 + [1 / 3(k-1)] * [Σ(1/(n_i-1)) - 1/(N-k)]</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
@@ -192,6 +323,12 @@
          TODAS LAS FUNCIONES JAVASCRIPT COMPLETAS
          ============================================== -->
     <script>
+        // Función del Easter Egg
+        function abrirFormulas() {
+            var myModal = new bootstrap.Modal(document.getElementById('modalFormulas'));
+            myModal.show();
+        }
+
         function calcMedias() {
             try {
                 let m1 = parseFloat(document.getElementById('m1').value), v1 = parseFloat(document.getElementById('v1').value), n1 = parseFloat(document.getElementById('n1').value);
@@ -309,7 +446,6 @@
                 let htmlOutput = "";
                 let hasOrder = false;
                 
-                // --- GENERACIÓN DE LA TABLA DE ERRORES ---
                 htmlOutput += `<div class="table-responsive mb-2 bg-white p-2 rounded shadow-sm border">
                     <h6 class="text-center text-primary mt-2">Tabla de Extracción de Errores Residuales</h6>
                     <table class="table table-bordered text-center error-table table-hover mb-0">
@@ -369,7 +505,6 @@
                 if(n < 4) { alert("Se requieren al menos 4 datos en total."); return; }
                 if(k_grupos < 2) { alert("Debes ingresar al menos 2 tratamientos."); return; }
 
-                // --- MEDIA GLOBAL (Y̿) ---
                 let grandMean = jStat.mean(allYValues);
                 htmlOutput += `
                 <div class="alert alert-light border border-secondary text-center py-2 mb-4 shadow-sm">
@@ -377,7 +512,6 @@
                     <span class="text-primary fw-bold fs-5 ms-2">${grandMean.toFixed(4)}</span>
                 </div>`;
 
-                // --- VECTOR VISUAL DE ERRORES ---
                 let erroresRachas = [...allErrors];
                 if(hasOrder) erroresRachas.sort((a,b) => (a.ord || 0) - (b.ord || 0));
                 
@@ -394,9 +528,6 @@
                     </div>
                 </div>`;
 
-                // ==============================================
-                // 1. ALEATORIEDAD (RACHAS)
-                // ==============================================
                 let arrRachas = erroresRachas.map(x => x.err);
                 let umbral = 0;
                 if(tipoUmbral === 'mediana') {
@@ -432,9 +563,6 @@
                     <div class="small">${htmlRachas}</div>
                 </div>`;
 
-                // ==============================================
-                // 2. NORMALIDAD
-                // ==============================================
                 let meanE = jStat.mean(arrRachas); let stdE = jStat.stdev(arrRachas, true); 
                 let sum2=0, sum3=0, sum4=0;
                 for(let x of arrRachas) { let dev=x-meanE; sum2+=Math.pow(dev,2); sum3+=Math.pow(dev,3); sum4+=Math.pow(dev,4); }
@@ -491,9 +619,6 @@
                     </div>
                 </div>`;
 
-                // ==============================================
-                // 3. HOMOCEDASTICIDAD
-                // ==============================================
                 let sum_inv_df = 0, sp2_num = 0; let vars = [], ni_arr = [];
                 let canBartlett = true;
                 for(let t of tratamientosRaw) {
@@ -561,20 +686,11 @@
                     </div>
                 </div>`;
 
-                // ==============================================
-                // 4. TABLA ANOVA GENERAL Y CONCLUSIÓN FINAL
-                // ==============================================
                 let sst = 0, sce = 0, sct = 0;
-                
-                // Total Sum of Squares (SST)
                 for(let y of allYValues) { sst += Math.pow(y - grandMean, 2); }
-                
-                // Error Sum of Squares (SCE)
                 for(let obj of allErrors) { sce += Math.pow(obj.err, 2); }
-                
-                // Treatment Sum of Squares (SCT)
                 sct = sst - sce;
-                if(sct < 0) sct = 0; // Prevenir errores de coma flotante
+                if(sct < 0) sct = 0; 
 
                 let df_t = k_grupos - 1;
                 let df_e = n - k_grupos;
@@ -657,7 +773,6 @@
             }
         }
 
-        // --- PESTAÑA 5: TABLAS Y p-VALOR ---
         function toggleDfTablas() {
             try {
                 let dist = document.getElementById('t_dist').value;
@@ -693,7 +808,7 @@
                 }
                 document.getElementById('res_critico').innerHTML = `<span class="text-muted fs-6">Valor Crítico:</span><br><b>${res}</b>`;
                 document.getElementById('res_critico').classList.remove('d-none'); document.getElementById('res_pvalor').classList.add('d-none'); 
-            } catch(error) { alert("Error calculando Valor Crítico."); }
+            } catch(error) { alert("Error calculando Valor Crítico. Verifica grados de libertad."); }
         }
 
         function calcPValor() {
@@ -721,7 +836,7 @@
                 }
                 document.getElementById('res_pvalor').innerHTML = `<span class="text-muted fs-6">Probabilidad (Valor P):</span><br><b>${p.toFixed(5)}</b><br><span class="fs-6 text-secondary">(${ (p*100).toFixed(3) }%)</span>`;
                 document.getElementById('res_pvalor').classList.remove('d-none'); document.getElementById('res_critico').classList.add('d-none'); 
-            } catch(error) { alert("Error calculando el p-Valor."); }
+            } catch(error) { alert("Error calculando el p-Valor. Verifica los datos."); }
         }
     </script>
 </body>
