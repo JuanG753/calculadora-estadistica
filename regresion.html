@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Regresión Lineal Múltiple (Matricial)</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- jStat para matemáticas y probabilidades -->
+    <script src="https://cdn.jsdelivr.net/npm/jstat@latest/dist/jstat.min.js"></script>
+    <!-- Chart.js para graficar -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { background-color: #f8f9fa; padding-bottom: 50px; font-size: 0.95rem; }
+        .card { border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 20px; border: none; }
+        .matrix-box { overflow-x: auto; font-family: monospace; font-size: 0.9em; background: #fff; border: 1px solid #dee2e6; border-radius: 5px; padding: 10px; margin-bottom: 10px; }
+        .table-matrix td { padding: 4px 8px; border: 1px dashed #ccc; text-align: right; }
+        .chart-container { position: relative; height: 350px; width: 100%; margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <div class="container mt-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="text-primary fw-bold mb-0">Regresión Lineal Múltiple (Enfoque Matricial)</h2>
+            <a href="index.html" class="btn btn-outline-dark fw-bold">← Volver a Calculadora Principal</a>
+        </div>
+
+        <div class="card p-3 border-primary shadow-sm mb-4">
+            <h5 class="text-primary fw-bold">1. Ingreso de Datos</h5>
+            <p class="text-muted small mb-2">Ingresa los datos del experimento. Formato: <code>Y, X1, X2...</code> (Una observación por línea, separados por coma). El intercepto se agrega automáticamente.</p>
+            <textarea id="reg_datos" class="form-control mb-3" rows="6" placeholder="Ejemplo:&#10;9.95, 2, 50&#10;24.45, 8, 110&#10;31.75, 11, 120"></textarea>
+            
+            <div class="row g-2 mb-3">
+                <div class="col-md-4">
+                    <label>Nivel de Significancia (α)</label>
+                    <input type="number" id="reg_alfa" class="form-control" value="0.05" step="0.01">
+                </div>
+            </div>
+            <button class="btn btn-primary w-100 fw-bold fs-5 shadow-sm" onclick="calcRegresion()">Calcular Regresión Matricial</button>
+        </div>
+
+        <!-- Contenedor de Resultados -->
+        <div id="res_regresion" class="d-none">
+            
+            <!-- SECCIÓN MATRICIAL -->
+            <div class="card p-3 border-dark mb-4">
+                <h5 class="text-dark fw-bold">2. Desarrollo Matricial (Ecuaciones Normales)</h5>
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="text-secondary fw-bold">Matriz (X'X)</h6>
+                        <div id="mat_xtx" class="matrix-box"></div>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-secondary fw-bold">Vector (X'Y)</h6>
+                        <div id="mat_xty" class="matrix-box"></div>
+                    </div>
+                    <div class="col-md-8">
+                        <h6 class="text-secondary fw-bold">Inversa C = (X'X)⁻¹</h6>
+                        <div id="mat_c" class="matrix-box"></div>
+                    </div>
+                    <div class="col-md-4">
+                        <h6 class="text-success fw-bold">Coeficientes β = (X'X)⁻¹(X'Y)</h6>
+                        <div id="mat_beta" class="matrix-box border-success"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TABLA ANOVA -->
+            <div class="card p-0 border-info shadow-sm mb-4">
+                <div class="card-header bg-info text-white text-center fw-bold fs-5">
+                    TABLA ANOVA PARA LA REGRESIÓN
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-bordered text-center mb-0 align-middle">
+                            <thead class="table-light">
+                                <tr class="small">
+                                    <th>Fuente de Variación</th>
+                                    <th>Suma de Cuadrados (SS)</th>
+                                    <th>Grados de Libertad (df)</th>
+                                    <th>Cuadrado Medio (MS)</th>
+                                    <th>F₀</th>
+                                    <th>Valor p</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabla_anova_body">
+                                <!-- Llenado por JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="card-footer bg-light text-center">
+                    <div id="anova_conclusion" class="fs-6 mt-2"></div>
+                    <div id="anova_r2" class="fs-6 mt-1 text-primary fw-bold"></div>
+                </div>
+            </div>
+
+            <!-- COEFICIENTES E INTERVALOS -->
+            <div class="card p-0 border-secondary shadow-sm mb-4">
+                <div class="card-header bg-secondary text-white text-center fw-bold fs-5">
+                    Prueba de Coeficientes Individuales e Intervalos
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-bordered text-center mb-0 align-middle table-hover">
+                            <thead class="table-light">
+                                <tr class="small">
+                                    <th>Parámetro</th>
+                                    <th>Coeficiente (β)</th>
+                                    <th>Error Estándar (SE)</th>
+                                    <th>Estadístico T₀</th>
+                                    <th>Valor p</th>
+                                    <th>IC Inferior</th>
+                                    <th>IC Superior</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabla_coef_body">
+                                <!-- Llenado por JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- GRÁFICO DE DISPERSIÓN -->
+            <div class="card p-3 border-dark shadow-sm">
+                <h5 class="text-dark fw-bold text-center">Gráfico de Dispersión: Y Real vs. Ŷ Predicho</h5>
+                <div class="chart-container">
+                    <canvas id="chartDispersion"></canvas>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- SCRIPT DE LÓGICA -->
+    <script>
+        function renderMatrix(mat, id) {
+            let html = '<table class="table-matrix mx-auto">';
+            for(let i=0; i<mat.length; i++) {
+                html += '<tr>';
+                for(let j=0; j<mat[i].length; j++) {
+                    html += '<td>' + mat[i][j].toFixed(4) + '</td>';
+                }
+                html += '</tr>';
+            }
+            html += '</table>';
+            document.getElementById(id).innerHTML = html;
+        }
+
+        let chartDisp = null;
+
+        function calcRegresion() {
+            try {
+                let rawText = document.getElementById('reg_datos').value.trim();
+                let alfa = parseFloat(document.getElementById('reg_alfa').value);
+                
+                if(!rawText) { alert("Ingresa los datos."); return; }
+                
+                let lines = rawText.split('\n');
+                let Y_arr = [], X_arr = [];
+                
+                for(let l of lines) {
+                    let parts = l.split(',').map(x => parseFloat(x.trim())).filter(x => !isNaN(x));
+                    if(parts.length < 2) continue;
+                    
+                    Y_arr.push([parts[0]]); // Y es la primera columna
+                    
+                    let x_row = [1]; // Agregar B0 (Intercepto)
+                    for(let i=1; i<parts.length; i++) x_row.push(parts[i]);
+                    X_arr.push(x_row);
+                }
+                
+                let n = Y_arr.length;
+                let p = X_arr[0].length; // k + 1
+                let k = p - 1;
+                
+                if(n <= p) { alert("Se requieren más observaciones que parámetros (n > k+1)."); return; }
+
+                // --- MATRICES ---
+                let XT = jStat.transpose(X_arr);
+                let XTX = jStat.multiply(XT, X_arr);
+                let C = jStat.inv(XTX);
+                let XTY = jStat.multiply(XT, Y_arr);
+                let Beta = jStat.multiply(C, XTY);
+                
+                // Mostrar Matrices
+                renderMatrix(XTX, 'mat_xtx');
+                renderMatrix(XTY, 'mat_xty');
+                renderMatrix(C, 'mat_c');
+                renderMatrix(Beta, 'mat_beta');
+                
+                // --- SUMAS PARA ANOVA ---
+                let sumY = 0, sumY2 = 0;
+                for(let i=0; i<n; i++) {
+                    sumY += Y_arr[i][0];
+                    sumY2 += Math.pow(Y_arr[i][0], 2);
+                }
+                
+                let BetaT = jStat.transpose(Beta);
+                let BetaT_XTY = jStat.multiply(BetaT, XTY)[0][0];
+                
+                let correction = Math.pow(sumY, 2) / n;
+                
+                let SSR = BetaT_XTY - correction;
+                let SSE = sumY2 - BetaT_XTY;
+                let SST = sumY2 - correction;
+                
+                let df_R = k;
+                let df_E = n - p;
+                let df_T = n - 1;
+                
+                let MSR = SSR / df_R;
+                let MSE = SSE / df_E;
+                let F0 = MSR / MSE;
+                
+                let pValAnova = 1 - jStat.centralF.cdf(F0, df_R, df_E);
+                let R2 = SSR / SST;
+
+                // --- TABLA ANOVA ---
+                let anovaHtml = `
+                    <tr>
+                        <td class="fw-bold bg-light">Regresión (SSR)</td>
+                        <td>${SSR.toFixed(4)}</td>
+                        <td>${df_R}</td>
+                        <td>${MSR.toFixed(4)}</td>
+                        <td class="fw-bold text-info fs-5">${F0.toFixed(4)}</td>
+                        <td class="fw-bold ${(pValAnova < alfa)?'text-danger':'text-success'}">${pValAnova.toFixed(4)}</td>
+                    </tr>
+                    <tr>
+                        <td class="fw-bold bg-light">Error (SSE)</td>
+                        <td>${SSE.toFixed(4)}</td>
+                        <td>${df_E}</td>
+                        <td>${MSE.toFixed(4)}</td>
+                        <td class="bg-light"></td><td class="bg-light"></td>
+                    </tr>
+                    <tr class="table-light border-secondary">
+                        <td class="fw-bold">Total (Syy)</td>
+                        <td class="fw-bold">${SST.toFixed(4)}</td>
+                        <td class="fw-bold">${df_T}</td>
+                        <td></td><td></td><td></td>
+                    </tr>
+                `;
+                document.getElementById('tabla_anova_body').innerHTML = anovaHtml;
+                
+                let conc = (pValAnova < alfa) 
+                    ? `<span class="text-danger fw-bold">SE RECHAZA H₀:</span> El modelo de regresión es significativo.`
+                    : `<span class="text-success fw-bold">NO SE RECHAZA H₀:</span> El modelo no explica la variabilidad significativamente.`;
+                document.getElementById('anova_conclusion').innerHTML = conc;
+                document.getElementById('anova_r2').innerHTML = `Coeficiente de Determinación (R²) = ${(R2*100).toFixed(2)}%`;
+
+                // --- COEFICIENTES E INTERVALOS ---
+                let t_crit = jStat.studentt.inv(1 - alfa/2, df_E);
+                let coefHtml = "";
+                for(let j=0; j<p; j++) {
+                    let bj = Beta[j][0];
+                    let cjj = C[j][j];
+                    let se_bj = Math.sqrt(MSE * cjj);
+                    let t0 = bj / se_bj;
+                    let pval_t = 2 * (1 - jStat.studentt.cdf(Math.abs(t0), df_E));
+                    
+                    let ic_inf = bj - t_crit * se_bj;
+                    let ic_sup = bj + t_crit * se_bj;
+                    
+                    let paramName = (j === 0) ? "β₀ (Intercepto)" : "β" + j;
+                    
+                    coefHtml += `
+                        <tr>
+                            <td class="fw-bold bg-light">${paramName}</td>
+                            <td class="text-primary fw-bold">${bj.toFixed(4)}</td>
+                            <td>${se_bj.toFixed(4)}</td>
+                            <td>${t0.toFixed(4)}</td>
+                            <td class="${(pval_t < alfa)?'text-danger fw-bold':''} ">${pval_t.toFixed(4)}</td>
+                            <td>${ic_inf.toFixed(4)}</td>
+                            <td>${ic_sup.toFixed(4)}</td>
+                        </tr>
+                    `;
+                }
+                document.getElementById('tabla_coef_body').innerHTML = coefHtml;
+
+                // --- GRÁFICO DE DISPERSIÓN (Y vs Ŷ) ---
+                let Y_pred = jStat.multiply(X_arr, Beta);
+                let scatterData = [];
+                for(let i=0; i<n; i++) {
+                    scatterData.push({ x: Y_arr[i][0], y: Y_pred[i][0] });
+                }
+                
+                let min_val = Math.min(...Y_arr.map(y=>y[0]), ...Y_pred.map(y=>y[0]));
+                let max_val = Math.max(...Y_arr.map(y=>y[0]), ...Y_pred.map(y=>y[0]));
+                let lineData = [{x: min_val, y: min_val}, {x: max_val, y: max_val}];
+
+                if(chartDisp) chartDisp.destroy();
+                let ctx = document.getElementById('chartDispersion').getContext('2d');
+                chartDisp = new Chart(ctx, {
+                    type: 'scatter',
+                    data: {
+                        datasets: [
+                            {
+                                label: 'Línea de Ajuste Perfecto (Y = Ŷ)',
+                                data: lineData,
+                                type: 'line',
+                                borderColor: '#198754',
+                                borderDash: [5, 5],
+                                borderWidth: 2,
+                                fill: false,
+                                pointRadius: 0
+                            },
+                            {
+                                label: 'Observaciones (Y Real vs Predicho)',
+                                data: scatterData,
+                                backgroundColor: '#0d6efd',
+                                pointRadius: 5,
+                                pointHoverRadius: 8
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            x: { title: { display: true, text: 'Y Real (Observado)', font: {weight: 'bold'} } },
+                            y: { title: { display: true, text: 'Ŷ Predicho (Modelo)', font: {weight: 'bold'} } }
+                        }
+                    }
+                });
+
+                document.getElementById('res_regresion').classList.remove('d-none');
+
+            } catch(e) {
+                alert("Error de procesamiento matricial. Asegúrate de ingresar bien los datos (Y, X1, X2...).");
+                console.error(e);
+            }
+        }
+    </script>
+</body>
+</html>
