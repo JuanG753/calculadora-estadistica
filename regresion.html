@@ -41,10 +41,7 @@
             <button class="btn btn-primary w-100 fw-bold fs-5 shadow-sm py-2" onclick="calcRegresion()">Calcular Regresión Matricial</button>
         </div>
 
-        <!-- Contenedor Principal de Resultados -->
         <div id="res_regresion" class="d-none">
-            
-            <!-- CONTENEDOR DE LA UI PRINCIPAL -->
             <div id="ui_exitosa">
                 <!-- SECCIÓN MATRICIAL -->
                 <div class="accordion mb-4 shadow-sm" id="accordionMatrices">
@@ -130,7 +127,7 @@
                                         <th>Coeficiente (β)</th>
                                         <th>Error Estándar (SE)</th>
                                         <th>Estadístico T₀</th>
-                                        <th>Valor p (Cola Derecha)</th>
+                                        <th>Valor p (Punto Crítico)</th>
                                         <th>IC Inferior</th>
                                         <th>IC Superior</th>
                                     </tr>
@@ -145,16 +142,14 @@
                 <!-- CONTENEDOR DEL MEJOR MODELO (STEPWISE) -->
                 <div id="res_stepwise_container"></div>
                 
-                <!-- NUEVO: MÓDULO DE PREDICCIÓN -->
+                <!-- MÓDULO DE PREDICCIÓN -->
                 <div class="card p-4 border-success shadow-sm mb-4">
                     <h5 class="text-success fw-bold text-center">🔮 Predicción de Nuevos Valores (Modelo Completo)</h5>
                     <p class="text-muted small text-center mb-3">Ingresa los valores de las variables independientes para calcular el valor pronosticado de Ŷ.</p>
                     <div id="prediccion_inputs" class="row justify-content-center g-3 mb-3">
-                        <!-- Inputs generados por JS -->
                     </div>
                     <button class="btn btn-success w-100 fw-bold shadow-sm py-2 fs-5" onclick="calcularPrediccion()">Calcular Predicción (Ŷ)</button>
                     <div id="res_prediccion" class="alert alert-success mt-4 text-center d-none shadow-sm border-success">
-                        <!-- Resultado de Predicción -->
                     </div>
                 </div>
 
@@ -174,9 +169,8 @@
 
     <!-- SCRIPT DE LÓGICA -->
     <script>
-        window.currentBetas = []; // Para almacenar las betas y usarlas en la predicción
+        window.currentBetas = [];
 
-        // FORMATEADOR MATEMÁTICO INTELIGENTE
         function formatNumber(num) {
             if (num === 0) return "0.0000";
             let absNum = Math.abs(num);
@@ -196,7 +190,6 @@
             document.getElementById(id).innerHTML = html;
         }
 
-        // MOTOR MATEMÁTICO GENÉRICO (SUB-MODELOS)
         function getRegStats(Y_arr, X_matrix) {
             let n = Y_arr.length;
             let p = X_matrix[0].length;
@@ -229,8 +222,8 @@
                 let se_bj = Math.sqrt(MSE * cjj);
                 let t0 = (se_bj !== 0) ? Beta[j][0] / se_bj : 0;
                 
-                // CÁLCULO DE VALOR P: COLA DERECHA ESTRICTAMENTE (Sin multiplicar por 2)
-                let pval_t = 1 - jStat.studentt.cdf(t0, df_E);
+                // CÁLCULO ESTILO PUNTO CRÍTICO (Valor absoluto para medir siempre el área de la cola sin multiplicar)
+                let pval_t = 1 - jStat.studentt.cdf(Math.abs(t0), df_E);
                 pValues.push(pval_t);
             }
             
@@ -270,7 +263,7 @@
                     X_arr.push(x_row);
                 }
                 
-                if(Y_arr.length === 0) throw new Error("No se detectaron datos numéricos válidos. Revisa el formato (Y, X1, X2...).");
+                if(Y_arr.length === 0) throw new Error("No se detectaron datos numéricos válidos.");
                 
                 let n = Y_arr.length;
                 let p = X_arr[0].length;
@@ -278,10 +271,10 @@
                 
                 for(let i=0; i<n; i++) {
                     if (X_arr[i].length !== p) {
-                        throw new Error(`Inconsistencia detectada en la fila ${i+1}. Tiene ${X_arr[i].length - 1} variables predictoras, pero la fila 1 tiene ${k}. Todas las filas deben tener la misma cantidad de datos.`);
+                        throw new Error(`Inconsistencia en la fila ${i+1}. Todas las filas deben tener la misma cantidad de datos.`);
                     }
                 }
-                if(n <= p) throw new Error(`Se requieren más observaciones que parámetros. Tienes ${n} datos pero ${p} coeficientes a calcular.`);
+                if(n <= p) throw new Error(`Se requieren más observaciones que parámetros.`);
 
                 resDiv.innerHTML = "";
                 resDiv.appendChild(uiExitosa);
@@ -293,7 +286,6 @@
                 let XTY = jStat.multiply(XT, Y_arr);
                 let Beta = jStat.multiply(C, XTY);
                 
-                // GUARDAR BETAS PARA LA PREDICCIÓN
                 window.currentBetas = Beta;
                 
                 renderMatrix(X_arr, 'mat_x');
@@ -354,7 +346,7 @@
                 document.getElementById('tabla_anova_body').innerHTML = anovaHtml;
                 
                 let conc = (pValAnova < alfa) 
-                    ? `<span class="text-danger fw-bold">SE RECHAZA H₀:</span> El modelo de regresión es significativo.`
+                    ? `<span class="text-danger fw-bold">SE RECHAZA H₀:</span> El modelo es significativo.`
                     : `<span class="text-success fw-bold">NO SE RECHAZA H₀:</span> El modelo no explica la variabilidad significativamente.`;
                 document.getElementById('anova_conclusion').innerHTML = conc;
                 document.getElementById('anova_r2').innerHTML = `Coeficiente de Determinación (R²) = ${(R2*100).toFixed(2)}% &nbsp;&nbsp;|&nbsp;&nbsp; R² Ajustado = ${(R2_adj*100).toFixed(2)}%`;
@@ -368,8 +360,8 @@
                     let se_bj = Math.sqrt(MSE * cjj);
                     let t0 = (se_bj !== 0) ? bj / se_bj : 0;
                     
-                    // CÁLCULO DE VALOR P: COLA DERECHA ESTRICTAMENTE
-                    let pval_t = 1 - jStat.studentt.cdf(t0, df_E);
+                    // CÁLCULO ESTILO PUNTO CRÍTICO
+                    let pval_t = 1 - jStat.studentt.cdf(Math.abs(t0), df_E);
                     
                     let ic_inf = bj - t_crit * se_bj;
                     let ic_sup = bj + t_crit * se_bj;
@@ -381,7 +373,7 @@
                             <td class="text-primary fw-bold">${bj.toFixed(4)}</td>
                             <td>${se_bj.toFixed(4)}</td>
                             <td>${t0.toFixed(4)}</td>
-                            <td class="${(pval_t < alfa)?'text-danger fw-bold':''} ">${pval_t.toFixed(4)}</td>
+                            <td class="${(pval_t < (alfa/2))?'text-danger fw-bold':''} ">${pval_t.toFixed(4)}</td>
                             <td>${ic_inf.toFixed(4)}</td>
                             <td>${ic_sup.toFixed(4)}</td>
                         </tr>
@@ -389,7 +381,6 @@
                 }
                 document.getElementById('tabla_coef_body').innerHTML = coefHtml;
 
-                // CONSTRUIR INPUTS DE PREDICCIÓN DINÁMICAMENTE
                 let predHtml = '';
                 for(let j=1; j<=k; j++) {
                     predHtml += `
@@ -401,8 +392,6 @@
                 document.getElementById('prediccion_inputs').innerHTML = predHtml;
                 document.getElementById('res_prediccion').classList.add('d-none');
 
-                // STEPWISE OMITIDO AQUÍ PARA AHORRAR ESPACIO VISUAL, PERO LA LÓGICA ES LA MISMA
-                // ... (El código de Stepwise se mantiene intacto debajo en el HTML original)
                 let htmlStepwise = `
                 <div class="accordion mb-4 shadow-sm" id="accordionStepwise">
                     <div class="accordion-item border-warning">
@@ -444,18 +433,18 @@
                         <h6 class="text-primary fw-bold border-bottom pb-2">Paso ${stepCount}: Evaluar [ ${active_names} ]</h6>
                         <div class="small mb-2 text-secondary">MSE: <b>${stats.MSE.toFixed(4)}</b> &nbsp;|&nbsp; R² Ajustado: ${(stats.R2_adj*100).toFixed(2)}%</div>
                         <table class="table table-sm table-bordered text-center mb-2">
-                            <thead class="table-light"><tr><th>Variable</th><th>Valor p (Cola Der)</th><th>Decisión</th></tr></thead>
+                            <thead class="table-light"><tr><th>Variable</th><th>Valor p (Punto Crítico)</th><th>Decisión</th></tr></thead>
                             <tbody>`;
                             
                     let varToRemove = -1, originalVarToRemove = -1;
-                    if (max_p > alfa && active_cols.length > 1) {
+                    if (max_p > (alfa/2) && active_cols.length > 1) {
                         varToRemove = max_p_idx;
                         originalVarToRemove = active_cols[max_p_idx];
                     }
                     
                     for(let j=1; j<active_cols.length; j++) {
                         let isMax = (j === varToRemove);
-                        let action = isMax ? `<span class="text-danger fw-bold">Eliminar (p > ${alfa})</span>` : `<span class="text-success">Mantener</span>`;
+                        let action = isMax ? `<span class="text-danger fw-bold">Eliminar</span>` : `<span class="text-success">Mantener</span>`;
                         htmlStepwise += `<tr><td class="fw-bold">X${active_cols[j]}</td><td class="${isMax?'text-danger fw-bold':''}">${stats.pValues[j].toFixed(4)}</td><td>${action}</td></tr>`;
                     }
                     
@@ -464,7 +453,7 @@
                     htmlStepwise += `</tbody></table>`;
                     
                     if (varToRemove !== -1) {
-                        htmlStepwise += `<div class="text-danger small fw-bold mt-2">→ Se elimina la variable X${originalVarToRemove} del modelo. Recalculando...</div>`;
+                        htmlStepwise += `<div class="text-danger small fw-bold mt-2">→ Se elimina X${originalVarToRemove}. Recalculando...</div>`;
                         active_cols.splice(varToRemove, 1);
                         stepCount++;
                     } else {
@@ -492,7 +481,6 @@
                 htmlStepwise += `</ul></div></div></div></div>`;
                 document.getElementById('res_stepwise_container').innerHTML = htmlStepwise;
 
-                // --- GRÁFICO DE DISPERSIÓN ---
                 let Y_pred = jStat.multiply(X_arr, Beta);
                 let scatterData = [];
                 for(let i=0; i<n; i++) scatterData.push({ x: Y_arr[i][0], y: Y_pred[i][0] });
@@ -526,13 +514,12 @@
             }
         }
 
-        // LÓGICA DE PREDICCIÓN
         function calcularPrediccion() {
             let betas = window.currentBetas;
             if(!betas || betas.length === 0) return;
             
-            let y_pred = betas[0][0]; // Comenzar con el Intercepto
-            let eqText = `${y_pred.toFixed(4)}`; // Texto de la ecuación visual
+            let y_pred = betas[0][0]; 
+            let eqText = `${y_pred.toFixed(4)}`; 
             
             for(let j=1; j<betas.length; j++) {
                 let inputElement = document.getElementById(`pred_x${j}`);
@@ -545,9 +532,8 @@
                 }
                 
                 let b = betas[j][0];
-                y_pred += b * valX; // Operación real
+                y_pred += b * valX; 
                 
-                // Formateo visual
                 let sign = b >= 0 ? "+" : "-";
                 eqText += ` ${sign} ${Math.abs(b).toFixed(4)}(${valX})`;
             }
