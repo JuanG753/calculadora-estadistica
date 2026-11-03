@@ -29,130 +29,132 @@
 
         <div class="card p-3 border-primary shadow-sm mb-4">
             <h5 class="text-primary fw-bold">1. Ingreso de Datos</h5>
-            <p class="text-muted small mb-2">Ingresa los datos del experimento. Formato: <code>Y, X1, X2...</code> (Una observación por línea, separados por coma). El intercepto se agrega automáticamente.</p>
-            <textarea id="reg_datos" class="form-control mb-3" rows="6" placeholder="Ejemplo:&#10;9.95, 2, 50&#10;24.45, 8, 110&#10;31.75, 11, 120"></textarea>
+            <p class="text-muted small mb-2">Ingresa los datos del experimento. Formato: <code>Y, X1, X2...</code> (Una observación por línea, separados por coma).</p>
+            <textarea id="reg_datos" class="form-control mb-3" rows="8" placeholder="Ejemplo:&#10;9.8, 3.3, 2.8, 3.1, 4.1&#10;12.6, 4.4, 4.9, 3.5, 3.9"></textarea>
             
             <div class="row g-2 mb-3">
                 <div class="col-md-4">
-                    <label>Nivel de Significancia (α)</label>
+                    <label class="fw-bold">Nivel de Significancia (α)</label>
                     <input type="number" id="reg_alfa" class="form-control" value="0.05" step="0.01">
                 </div>
             </div>
-            <button class="btn btn-primary w-100 fw-bold fs-5 shadow-sm" onclick="calcRegresion()">Calcular Regresión Matricial</button>
+            <button class="btn btn-primary w-100 fw-bold fs-5 shadow-sm py-2" onclick="calcRegresion()">Calcular Regresión Matricial</button>
         </div>
 
-        <!-- Contenedor de Resultados -->
+        <!-- Contenedor Principal de Resultados -->
         <div id="res_regresion" class="d-none">
             
-            <!-- SECCIÓN MATRICIAL (ACORDEÓN DESPLEGABLE) -->
-            <div class="accordion mb-4 shadow-sm" id="accordionMatrices">
-                <div class="accordion-item border-dark">
-                    <h2 class="accordion-header" id="headingMatrices">
-                        <button class="accordion-button collapsed fw-bold text-dark bg-light" type="button" data-bs-toggle="collapse" data-bs-target="#collapseMatrices" aria-expanded="false" aria-controls="collapseMatrices">
-                            2. Desarrollo Matricial (Ver Matrices Originales y Ecuaciones Normales)
-                        </button>
-                    </h2>
-                    <div id="collapseMatrices" class="accordion-collapse collapse" aria-labelledby="headingMatrices" data-bs-parent="#accordionMatrices">
-                        <div class="accordion-body bg-white p-3">
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <h6 class="text-secondary fw-bold">Matriz Original (X)</h6>
-                                    <div id="mat_x" class="matrix-box" style="max-height: 250px; overflow-y: auto;"></div>
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <h6 class="text-secondary fw-bold">Vector Original (Y)</h6>
-                                    <div id="mat_y" class="matrix-box" style="max-height: 250px; overflow-y: auto;"></div>
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <h6 class="text-secondary fw-bold">Matriz (X'X)</h6>
-                                    <div id="mat_xtx" class="matrix-box"></div>
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <h6 class="text-secondary fw-bold">Vector (X'Y)</h6>
-                                    <div id="mat_xty" class="matrix-box"></div>
-                                </div>
-                                <div class="col-md-8 mb-3">
-                                    <h6 class="text-secondary fw-bold">Inversa C = (X'X)⁻¹</h6>
-                                    <div id="mat_c" class="matrix-box"></div>
-                                </div>
-                                <div class="col-md-4 mb-3">
-                                    <h6 class="text-success fw-bold">Coeficientes β = (X'X)⁻¹(X'Y)</h6>
-                                    <div id="mat_beta" class="matrix-box border-success"></div>
+            <!-- CONTENEDOR DE LA UI PRINCIPAL (SE LLENARÁ SI TODO SALE BIEN) -->
+            <div id="ui_exitosa">
+                <!-- SECCIÓN MATRICIAL (ACORDEÓN DESPLEGABLE) -->
+                <div class="accordion mb-4 shadow-sm" id="accordionMatrices">
+                    <div class="accordion-item border-dark">
+                        <h2 class="accordion-header" id="headingMatrices">
+                            <button class="accordion-button collapsed fw-bold text-dark bg-light" type="button" data-bs-toggle="collapse" data-bs-target="#collapseMatrices" aria-expanded="false" aria-controls="collapseMatrices">
+                                2. Desarrollo Matricial (Ver Matrices Originales y Ecuaciones Normales)
+                            </button>
+                        </h2>
+                        <div id="collapseMatrices" class="accordion-collapse collapse" aria-labelledby="headingMatrices" data-bs-parent="#accordionMatrices">
+                            <div class="accordion-body bg-white p-3">
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <h6 class="text-secondary fw-bold">Matriz Original (X)</h6>
+                                        <div id="mat_x" class="matrix-box" style="max-height: 250px; overflow-y: auto;"></div>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <h6 class="text-secondary fw-bold">Vector Original (Y)</h6>
+                                        <div id="mat_y" class="matrix-box" style="max-height: 250px; overflow-y: auto;"></div>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <h6 class="text-secondary fw-bold">Matriz (X'X)</h6>
+                                        <div id="mat_xtx" class="matrix-box"></div>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <h6 class="text-secondary fw-bold">Vector (X'Y)</h6>
+                                        <div id="mat_xty" class="matrix-box"></div>
+                                    </div>
+                                    <div class="col-md-8 mb-3">
+                                        <h6 class="text-secondary fw-bold">Inversa C = (X'X)⁻¹</h6>
+                                        <div id="mat_c" class="matrix-box"></div>
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <h6 class="text-success fw-bold">Coeficientes β = (X'X)⁻¹(X'Y)</h6>
+                                        <div id="mat_beta" class="matrix-box border-success"></div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- TABLA ANOVA -->
-            <div class="card p-0 border-info shadow-sm mb-4">
-                <div class="card-header bg-info text-white text-center fw-bold fs-5">
-                    TABLA ANOVA PARA LA REGRESIÓN
-                </div>
-                <div class="card-body p-0">
-                    <div class="table-responsive">
-                        <table class="table table-bordered text-center mb-0 align-middle">
-                            <thead class="table-light">
-                                <tr class="small">
-                                    <th>Fuente de Variación</th>
-                                    <th>Suma de Cuadrados (SS)</th>
-                                    <th>Grados de Libertad (df)</th>
-                                    <th>Cuadrado Medio (MS)</th>
-                                    <th>F₀</th>
-                                    <th>Valor p</th>
-                                </tr>
-                            </thead>
-                            <tbody id="tabla_anova_body">
-                                <!-- Llenado por JS -->
-                            </tbody>
-                        </table>
+                <!-- TABLA ANOVA -->
+                <div class="card p-0 border-info shadow-sm mb-4">
+                    <div class="card-header bg-info text-white text-center fw-bold fs-5">
+                        TABLA ANOVA PARA LA REGRESIÓN
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-bordered text-center mb-0 align-middle">
+                                <thead class="table-light">
+                                    <tr class="small">
+                                        <th>Fuente de Variación</th>
+                                        <th>Suma de Cuadrados (SS)</th>
+                                        <th>Grados de Libertad (df)</th>
+                                        <th>Cuadrado Medio (MS)</th>
+                                        <th>F₀</th>
+                                        <th>Valor p</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tabla_anova_body">
+                                    <!-- Llenado por JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="card-footer bg-light text-center">
+                        <div id="anova_conclusion" class="fs-6 mt-2"></div>
+                        <div id="anova_r2" class="fs-6 mt-1 text-primary fw-bold"></div>
                     </div>
                 </div>
-                <div class="card-footer bg-light text-center">
-                    <div id="anova_conclusion" class="fs-6 mt-2"></div>
-                    <div id="anova_r2" class="fs-6 mt-1 text-primary fw-bold"></div>
-                </div>
-            </div>
 
-            <!-- COEFICIENTES E INTERVALOS -->
-            <div class="card p-0 border-secondary shadow-sm mb-4">
-                <div class="card-header bg-secondary text-white text-center fw-bold fs-5">
-                    Prueba de Coeficientes Individuales e Intervalos
+                <!-- COEFICIENTES E INTERVALOS -->
+                <div class="card p-0 border-secondary shadow-sm mb-4">
+                    <div class="card-header bg-secondary text-white text-center fw-bold fs-5">
+                        Prueba de Coeficientes Individuales e Intervalos
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-bordered text-center mb-0 align-middle table-hover">
+                                <thead class="table-light">
+                                    <tr class="small">
+                                        <th>Parámetro</th>
+                                        <th>Coeficiente (β)</th>
+                                        <th>Error Estándar (SE)</th>
+                                        <th>Estadístico T₀</th>
+                                        <th>Valor p</th>
+                                        <th>IC Inferior</th>
+                                        <th>IC Superior</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tabla_coef_body">
+                                    <!-- Llenado por JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
-                <div class="card-body p-0">
-                    <div class="table-responsive">
-                        <table class="table table-bordered text-center mb-0 align-middle table-hover">
-                            <thead class="table-light">
-                                <tr class="small">
-                                    <th>Parámetro</th>
-                                    <th>Coeficiente (β)</th>
-                                    <th>Error Estándar (SE)</th>
-                                    <th>Estadístico T₀</th>
-                                    <th>Valor p</th>
-                                    <th>IC Inferior</th>
-                                    <th>IC Superior</th>
-                                </tr>
-                            </thead>
-                            <tbody id="tabla_coef_body">
-                                <!-- Llenado por JS -->
-                            </tbody>
-                        </table>
+
+                <!-- CONTENEDOR DEL MEJOR MODELO (STEPWISE) -->
+                <div id="res_stepwise_container"></div>
+
+                <!-- GRÁFICO DE DISPERSIÓN -->
+                <div class="card p-3 border-dark shadow-sm">
+                    <h5 class="text-dark fw-bold text-center">Gráfico de Dispersión: Y Real vs. Ŷ Predicho</h5>
+                    <div class="chart-container">
+                        <canvas id="chartDispersion"></canvas>
                     </div>
                 </div>
             </div>
-
-            <!-- CONTENEDOR DEL MEJOR MODELO (STEPWISE) -->
-            <div id="res_stepwise_container"></div>
-
-            <!-- GRÁFICO DE DISPERSIÓN -->
-            <div class="card p-3 border-dark shadow-sm">
-                <h5 class="text-dark fw-bold text-center">Gráfico de Dispersión: Y Real vs. Ŷ Predicho</h5>
-                <div class="chart-container">
-                    <canvas id="chartDispersion"></canvas>
-                </div>
-            </div>
-
         </div>
     </div>
 
@@ -165,29 +167,23 @@
         function formatNumber(num) {
             if (num === 0) return "0.0000";
             let absNum = Math.abs(num);
-            if (absNum < 0.0001) {
-                return num.toExponential(4).toUpperCase();
-            } else if (absNum < 0.01) {
-                return num.toFixed(6);
-            } else {
-                return num.toFixed(4);
-            }
+            if (absNum < 0.0001) return num.toExponential(4).toUpperCase();
+            else if (absNum < 0.01) return num.toFixed(6);
+            else return num.toFixed(4);
         }
 
         function renderMatrix(mat, id) {
             let html = '<table class="table-matrix mx-auto">';
             for(let i=0; i<mat.length; i++) {
                 html += '<tr>';
-                for(let j=0; j<mat[i].length; j++) {
-                    html += '<td>' + formatNumber(mat[i][j]) + '</td>';
-                }
+                for(let j=0; j<mat[i].length; j++) html += '<td>' + formatNumber(mat[i][j]) + '</td>';
                 html += '</tr>';
             }
             html += '</table>';
             document.getElementById(id).innerHTML = html;
         }
 
-        // MOTOR MATEMÁTICO GENÉRICO PARA CALCULAR CUALQUIER SUB-MODELO (USADO PARA EL PASO A PASO)
+        // MOTOR MATEMÁTICO GENÉRICO (SUB-MODELOS)
         function getRegStats(Y_arr, X_matrix) {
             let n = Y_arr.length;
             let p = X_matrix[0].length;
@@ -208,6 +204,8 @@
             let SSR = BetaT_XTY - correction;
             let SSE = sumY2 - BetaT_XTY;
             let SST = sumY2 - correction;
+            
+            // Corrección de punto flotante
             if (SSR < 0) SSR = 0; if (SSE < 0) SSE = 0;
             
             let df_E = n - p;
@@ -216,6 +214,7 @@
             let pValues = [];
             for(let j=0; j<p; j++) {
                 let cjj = C[j][j];
+                if (cjj < 0) cjj = 0; // Evitar raíces imaginarias
                 let se_bj = Math.sqrt(MSE * cjj);
                 let t0 = (se_bj !== 0) ? Beta[j][0] / se_bj : 0;
                 let pval_t = 2 * (1 - jStat.studentt.cdf(Math.abs(t0), df_E));
@@ -231,30 +230,54 @@
         let chartDisp = null;
 
         function calcRegresion() {
+            let resDiv = document.getElementById('res_regresion');
+            let uiExitosa = document.getElementById('ui_exitosa');
+            
             try {
+                // Reiniciar visibilidad
+                resDiv.classList.add('d-none');
+                
                 let rawText = document.getElementById('reg_datos').value.trim();
                 let alfa = parseFloat(document.getElementById('reg_alfa').value);
                 
-                if(!rawText) { alert("Ingresa los datos."); return; }
+                if(!rawText) throw new Error("La caja de datos está vacía. Por favor, ingresa los datos.");
                 
+                // LECTURA DE DATOS A PRUEBA DE BALAS
                 let lines = rawText.split('\n');
                 let Y_arr = [], X_arr = [];
                 
                 for(let l of lines) {
-                    let parts = l.split(',').map(x => parseFloat(x.trim())).filter(x => !isNaN(x));
-                    if(parts.length < 2) continue;
+                    let cleanLine = l.trim();
+                    if(cleanLine === "") continue; // Ignorar líneas en blanco
+                    
+                    let parts = cleanLine.split(',').map(x => parseFloat(x.trim())).filter(x => !isNaN(x));
+                    if(parts.length < 2) continue; // Si solo hay un número, se ignora
                     
                     Y_arr.push([parts[0]]);
-                    let x_row = [1];
+                    let x_row = [1]; // Agregar el Intercepto
                     for(let i=1; i<parts.length; i++) x_row.push(parts[i]);
                     X_arr.push(x_row);
                 }
+                
+                if(Y_arr.length === 0) throw new Error("No se detectaron datos numéricos válidos. Revisa el formato (Y, X1, X2...).");
                 
                 let n = Y_arr.length;
                 let p = X_arr[0].length;
                 let k = p - 1;
                 
-                if(n <= p) { alert("Se requieren más observaciones que parámetros (n > k+1)."); return; }
+                // VERIFICACIÓN DE INTEGRIDAD DE LAS FILAS
+                for(let i=0; i<n; i++) {
+                    if (X_arr[i].length !== p) {
+                        throw new Error(`Inconsistencia detectada en la fila ${i+1}. Tiene ${X_arr[i].length - 1} variables predictoras, pero la fila 1 tiene ${k}. Todas las filas deben tener exactamente la misma cantidad de datos.`);
+                    }
+                }
+                
+                if(n <= p) throw new Error(`Se requieren más observaciones que parámetros. Tienes ${n} datos pero ${p} coeficientes a calcular (incluyendo el intercepto).`);
+
+                // RESTAURAR LA UI EN CASO DE ÉXITO PREVIO A UN ERROR
+                resDiv.innerHTML = "";
+                resDiv.appendChild(uiExitosa);
+                resDiv.classList.remove('d-none');
 
                 // --- MATRICES MODELO COMPLETO ---
                 let XT = jStat.transpose(X_arr);
@@ -278,18 +301,14 @@
                 }
                 
                 let BetaT_XTY = 0;
-                for(let i=0; i<p; i++) {
-                    BetaT_XTY += Beta[i][0] * XTY[i][0];
-                }
+                for(let i=0; i<p; i++) { BetaT_XTY += Beta[i][0] * XTY[i][0]; }
                 
                 let correction = Math.pow(sumY, 2) / n;
-                
                 let SSR = BetaT_XTY - correction;
                 let SSE = sumY2 - BetaT_XTY;
                 let SST = sumY2 - correction;
                 
-                if (SSR < 0) SSR = 0;
-                if (SSE < 0) SSE = 0;
+                if (SSR < 0) SSR = 0; if (SSE < 0) SSE = 0;
                 
                 let df_R = k;
                 let df_E = n - p;
@@ -333,7 +352,7 @@
                     ? `<span class="text-danger fw-bold">SE RECHAZA H₀:</span> El modelo de regresión es significativo.`
                     : `<span class="text-success fw-bold">NO SE RECHAZA H₀:</span> El modelo no explica la variabilidad significativamente.`;
                 document.getElementById('anova_conclusion').innerHTML = conc;
-                document.getElementById('anova_r2').innerHTML = `Coeficiente de Determinación (R²) = ${(R2*100).toFixed(2)}\% &nbsp;&nbsp;\vert{}&nbsp;&nbsp; R² Ajustado = ${(R2_adj*100).toFixed(2)}%`;
+                document.getElementById('anova_r2').innerHTML = `Coeficiente de Determinación (R²) = ${(R2*100).toFixed(2)}% &nbsp;&nbsp;|&nbsp;&nbsp; R² Ajustado = ${(R2_adj*100).toFixed(2)}%`;
 
                 // --- COEFICIENTES E INTERVALOS ---
                 let t_crit = jStat.studentt.inv(1 - alfa/2, df_E);
@@ -341,13 +360,13 @@
                 for(let j=0; j<p; j++) {
                     let bj = Beta[j][0];
                     let cjj = C[j][j];
+                    if (cjj < 0) cjj = 0;
                     let se_bj = Math.sqrt(MSE * cjj);
-                    let t0 = bj / se_bj;
+                    let t0 = (se_bj !== 0) ? bj / se_bj : 0;
                     let pval_t = 2 * (1 - jStat.studentt.cdf(Math.abs(t0), df_E));
                     
                     let ic_inf = bj - t_crit * se_bj;
                     let ic_sup = bj + t_crit * se_bj;
-                    
                     let paramName = (j === 0) ? "β₀ (Intercepto)" : "β" + j;
                     
                     coefHtml += `
@@ -365,7 +384,7 @@
                 document.getElementById('tabla_coef_body').innerHTML = coefHtml;
 
                 // =========================================================================
-                // NUEVO: SELECCIÓN DEL MEJOR MODELO (Criterio del Menor Error - MSE)
+                // SELECCIÓN DEL MEJOR MODELO (Criterio del Menor Error - MSE)
                 // =========================================================================
                 let htmlStepwise = `
                 <div class="accordion mb-4 shadow-sm" id="accordionStepwise">
@@ -382,9 +401,8 @@
                 
                 let active_cols = [];
                 for(let c=0; c<p; c++) active_cols.push(c);
-                
                 let stepCount = 1;
-                let modelHistory = []; // Almacenará los MSE para comparar
+                let modelHistory = []; 
                 
                 while(true) {
                     let X_sub = [];
@@ -397,32 +415,22 @@
                     let stats = getRegStats(Y_arr, X_sub);
                     let active_names = active_cols.map(c => c===0 ? "β₀" : "X"+c).join(", ");
                     
-                    // Guardar en el historial
-                    modelHistory.push({
-                        step: stepCount,
-                        vars: active_names,
-                        r2_adj: stats.R2_adj,
-                        r2: stats.R2,
-                        mse: stats.MSE
-                    });
+                    modelHistory.push({ step: stepCount, vars: active_names, r2_adj: stats.R2_adj, r2: stats.R2, mse: stats.MSE });
                     
-                    let max_p = -1;
-                    let max_p_idx = -1; 
+                    let max_p = -1, max_p_idx = -1; 
                     for(let j=1; j<active_cols.length; j++) {
                         if(stats.pValues[j] > max_p) { max_p = stats.pValues[j]; max_p_idx = j; }
                     }
                     
                     htmlStepwise += `
                     <div class="mb-3 p-3 border rounded bg-white shadow-sm">
-                        <h6 class="text-primary fw-bold border-bottom pb-2">Paso ${stepCount}: Evaluar variables [${active_names} ]</h6>
-                        <div class="small mb-2 text-secondary">Cuadrado Medio del Error (MSE): <b>${stats.MSE.toFixed(4)}</b> &nbsp;\vert{}&nbsp; R² Ajustado: ${(stats.R2_adj*100).toFixed(2)}%</div>
+                        <h6 class="text-primary fw-bold border-bottom pb-2">Paso ${stepCount}: Evaluar variables [ ${active_names} ]</h6>
+                        <div class="small mb-2 text-secondary">Cuadrado Medio del Error (MSE): <b>${stats.MSE.toFixed(4)}</b> &nbsp;|&nbsp; R² Ajustado: ${(stats.R2_adj*100).toFixed(2)}%</div>
                         <table class="table table-sm table-bordered text-center mb-2">
                             <thead class="table-light"><tr><th>Variable</th><th>Valor p</th><th>Decisión</th></tr></thead>
                             <tbody>`;
                             
-                    let varToRemove = -1;
-                    let originalVarToRemove = -1;
-                    
+                    let varToRemove = -1, originalVarToRemove = -1;
                     if (max_p > alfa && active_cols.length > 1) {
                         varToRemove = max_p_idx;
                         originalVarToRemove = active_cols[max_p_idx];
@@ -430,4 +438,83 @@
                     
                     for(let j=1; j<active_cols.length; j++) {
                         let isMax = (j === varToRemove);
-                        let action = isMax ? `<span class="text-danger fw-bold">Eliminar (p
+                        let action = isMax ? `<span class="text-danger fw-bold">Eliminar (p > ${alfa})</span>` : `<span class="text-success">Mantener</span>`;
+                        htmlStepwise += `<tr><td class="fw-bold">X${active_cols[j]}</td><td class="${isMax?'text-danger fw-bold':''}">${stats.pValues[j].toFixed(4)}</td><td>${action}</td></tr>`;
+                    }
+                    
+                    if(active_cols.length === 1) htmlStepwise += `<tr><td colspan="3" class="text-muted">Solo ha quedado el Intercepto (β₀). Ninguna variable aportaba significativamente.</td></tr>`;
+                    
+                    htmlStepwise += `</tbody></table>`;
+                    
+                    if (varToRemove !== -1) {
+                        htmlStepwise += `<div class="text-danger small fw-bold mt-2">→ Se elimina la variable X${originalVarToRemove} del modelo. Recalculando...</div>`;
+                        active_cols.splice(varToRemove, 1);
+                        stepCount++;
+                    } else {
+                        htmlStepwise += `<div class="text-success fw-bold mt-3">✅ Proceso Iterativo Finalizado. Todas las variables restantes son estadísticamente significativas.</div>`;
+                        let eq = `Ŷ = ${stats.Beta[0][0].toFixed(4)}`;
+                        for(let j=1; j<active_cols.length; j++) {
+                            let b = stats.Beta[j][0];
+                            let sign = b >= 0 ? "+" : "-";
+                            eq += ` ${sign} ${Math.abs(b).toFixed(4)}X${active_cols[j]}`;
+                        }
+                        htmlStepwise += `<div class="alert alert-success mt-3 text-center shadow-sm"><span class="d-block text-dark small mb-1">Ecuación Predictiva Final:</span><span class="fs-5 font-monospace fw-bold">${eq}</span></div>`;
+                        break;
+                    }
+                    htmlStepwise += `</div>`; 
+                }
+                
+                htmlStepwise += `<h5 class="mt-4 fw-bold text-dark border-bottom pb-2">📊 Conclusión: Comparación de Modelos (Criterio del Error)</h5>`;
+                htmlStepwise += `<p class="small text-muted">El mejor modelo predictivo es el que alcanza el <strong>menor Cuadrado Medio del Error (MSE)</strong>.</p><ul class="list-group mb-3 shadow-sm">`;
+                
+                let min_mse = Infinity, best_step = -1;
+                for (let h of modelHistory) { if (h.mse < min_mse) { min_mse = h.mse; best_step = h.step; } }
+                for (let h of modelHistory) {
+                    let isBest = (h.step === best_step);
+                    htmlStepwise += `<li class="list-group-item d-flex justify-content-between align-items-center ${isBest ? 'list-group-item-success fw-bold border-success' : ''}"><div><span>Paso ${h.step} [ ${h.vars} ]</span>${isBest ? '<span class="badge bg-success ms-2">⭐ MENOR ERROR (MEJOR MODELO)</span>' : ''}</div><span class="fs-6">MSE = ${h.mse.toFixed(4)}</span></li>`;
+                }
+                htmlStepwise += `</ul></div></div></div></div>`;
+                document.getElementById('res_stepwise_container').innerHTML = htmlStepwise;
+                // =========================================================================
+
+                // --- GRÁFICO DE DISPERSIÓN ---
+                let Y_pred = jStat.multiply(X_arr, Beta);
+                let scatterData = [];
+                for(let i=0; i<n; i++) scatterData.push({ x: Y_arr[i][0], y: Y_pred[i][0] });
+                
+                let min_val = Math.min(...Y_arr.map(y=>y[0]), ...Y_pred.map(y=>y[0]));
+                let max_val = Math.max(...Y_arr.map(y=>y[0]), ...Y_pred.map(y=>y[0]));
+                let lineData = [{x: min_val, y: min_val}, {x: max_val, y: max_val}];
+
+                if(chartDisp) chartDisp.destroy();
+                let ctx = document.getElementById('chartDispersion').getContext('2d');
+                chartDisp = new Chart(ctx, {
+                    type: 'scatter',
+                    data: {
+                        datasets: [
+                            { label: 'Línea de Ajuste Perfecto (Y = Ŷ)', data: lineData, type: 'line', borderColor: '#198754', borderDash: [5, 5], borderWidth: 2, fill: false, pointRadius: 0 },
+                            { label: 'Observaciones (Y Real vs Predicho)', data: scatterData, backgroundColor: '#0d6efd', pointRadius: 5, pointHoverRadius: 8 }
+                        ]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, scales: { x: { title: { display: true, text: 'Y Real (Observado)', font: {weight: 'bold'} } }, y: { title: { display: true, text: 'Ŷ Predicho (Modelo Completo)', font: {weight: 'bold'} } } } }
+                });
+
+            } catch(e) {
+                // MANEJADOR VISUAL DE ERRORES (PANTALLA ROJA EN LA UI EN LUGAR DE ALERTA)
+                resDiv.innerHTML = `
+                    <div class="alert alert-danger shadow-sm border-danger">
+                        <h5 class="fw-bold text-danger">⚠️ Error detectado al procesar los datos</h5>
+                        <p class="mb-2 fs-6">${e.message}</p>
+                        <hr>
+                        <p class="mb-0 small"><strong>Posibles causas a revisar en tu texto:</strong><br>
+                        1. <strong>Filas desiguales:</strong> Comprueba que no se te haya borrado una coma o un número en alguna de las líneas.<br>
+                        2. <strong>Caracteres inválidos:</strong> Asegúrate de que los decimales usen el punto (.) y no la coma (,). La coma es solo para separar variables.</p>
+                    </div>
+                `;
+                resDiv.classList.remove('d-none');
+                console.error(e);
+            }
+        }
+    </script>
+</body>
+</html>
