@@ -54,30 +54,12 @@
                         <div id="collapseMatrices" class="accordion-collapse collapse" data-bs-parent="#accordionMatrices">
                             <div class="accordion-body bg-white p-3">
                                 <div class="row">
-                                    <div class="col-md-6 mb-3">
-                                        <h6 class="text-secondary fw-bold">Matriz Original (X)</h6>
-                                        <div id="mat_x" class="matrix-box" style="max-height: 250px; overflow-y: auto;"></div>
-                                    </div>
-                                    <div class="col-md-6 mb-3">
-                                        <h6 class="text-secondary fw-bold">Vector Original (Y)</h6>
-                                        <div id="mat_y" class="matrix-box" style="max-height: 250px; overflow-y: auto;"></div>
-                                    </div>
-                                    <div class="col-md-6 mb-3">
-                                        <h6 class="text-secondary fw-bold">Matriz (X'X)</h6>
-                                        <div id="mat_xtx" class="matrix-box"></div>
-                                    </div>
-                                    <div class="col-md-6 mb-3">
-                                        <h6 class="text-secondary fw-bold">Vector (X'Y)</h6>
-                                        <div id="mat_xty" class="matrix-box"></div>
-                                    </div>
-                                    <div class="col-md-8 mb-3">
-                                        <h6 class="text-secondary fw-bold">Inversa C = (X'X)⁻¹</h6>
-                                        <div id="mat_c" class="matrix-box"></div>
-                                    </div>
-                                    <div class="col-md-4 mb-3">
-                                        <h6 class="text-success fw-bold">Coeficientes β = (X'X)⁻¹(X'Y)</h6>
-                                        <div id="mat_beta" class="matrix-box border-success"></div>
-                                    </div>
+                                    <div class="col-md-6 mb-3"><h6 class="text-secondary fw-bold">Matriz Original (X)</h6><div id="mat_x" class="matrix-box" style="max-height: 250px; overflow-y: auto;"></div></div>
+                                    <div class="col-md-6 mb-3"><h6 class="text-secondary fw-bold">Vector Original (Y)</h6><div id="mat_y" class="matrix-box" style="max-height: 250px; overflow-y: auto;"></div></div>
+                                    <div class="col-md-6 mb-3"><h6 class="text-secondary fw-bold">Matriz (X'X)</h6><div id="mat_xtx" class="matrix-box"></div></div>
+                                    <div class="col-md-6 mb-3"><h6 class="text-secondary fw-bold">Vector (X'Y)</h6><div id="mat_xty" class="matrix-box"></div></div>
+                                    <div class="col-md-8 mb-3"><h6 class="text-secondary fw-bold">Inversa C = (X'X)⁻¹</h6><div id="mat_c" class="matrix-box"></div></div>
+                                    <div class="col-md-4 mb-3"><h6 class="text-success fw-bold">Coeficientes β = (X'X)⁻¹(X'Y)</h6><div id="mat_beta" class="matrix-box border-success"></div></div>
                                 </div>
                             </div>
                         </div>
@@ -133,6 +115,30 @@
                                     </tr>
                                 </thead>
                                 <tbody id="tabla_coef_body">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- NUEVO: DIAGNÓSTICO DE SUPUESTOS -->
+                <div class="card p-0 border-warning shadow-sm mb-4">
+                    <div class="card-header bg-warning text-dark text-center fw-bold fs-5">
+                        Diagnóstico de Supuestos del Modelo (Análisis de Residuos)
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-bordered text-center mb-0 align-middle">
+                                <thead class="table-light">
+                                    <tr class="small">
+                                        <th>Supuesto Estadístico</th>
+                                        <th>Prueba Aplicada</th>
+                                        <th>Estadístico</th>
+                                        <th>Valor P</th>
+                                        <th>Conclusión</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tabla_supuestos_body">
                                 </tbody>
                             </table>
                         </div>
@@ -221,8 +227,6 @@
                 if (cjj < 0) cjj = 0; 
                 let se_bj = Math.sqrt(MSE * cjj);
                 let t0 = (se_bj !== 0) ? Beta[j][0] / se_bj : 0;
-                
-                // CÁLCULO ESTILO PUNTO CRÍTICO (Valor absoluto para medir siempre el área de la cola sin multiplicar)
                 let pval_t = 1 - jStat.studentt.cdf(Math.abs(t0), df_E);
                 pValues.push(pval_t);
             }
@@ -360,7 +364,6 @@
                     let se_bj = Math.sqrt(MSE * cjj);
                     let t0 = (se_bj !== 0) ? bj / se_bj : 0;
                     
-                    // CÁLCULO ESTILO PUNTO CRÍTICO
                     let pval_t = 1 - jStat.studentt.cdf(Math.abs(t0), df_E);
                     
                     let ic_inf = bj - t_crit * se_bj;
@@ -380,6 +383,82 @@
                     `;
                 }
                 document.getElementById('tabla_coef_body').innerHTML = coefHtml;
+
+                // =========================================================================
+                // NUEVO: DIAGNÓSTICO DE SUPUESTOS (Normalidad, Aleatoriedad, Homocedasticidad)
+                // =========================================================================
+                let Y_pred = jStat.multiply(X_arr, Beta);
+                let residuos = [];
+                let e2_arr = [];
+                let sum_e2 = 0;
+                
+                for(let i=0; i<n; i++) {
+                    let e = Y_arr[i][0] - Y_pred[i][0];
+                    residuos.push(e);
+                    sum_e2 += e * e;
+                    e2_arr.push([e * e]);
+                }
+
+                // 1. Durbin-Watson (Aleatoriedad)
+                let sum_de2 = 0;
+                for(let i=1; i<n; i++) {
+                    sum_de2 += Math.pow(residuos[i] - residuos[i-1], 2);
+                }
+                let dw_stat = sum_de2 / sum_e2;
+                let dw_conclusion = (dw_stat > 1.5 && dw_stat < 2.5) 
+                    ? `<span class="text-success fw-bold">✓ Pasa (Errores independientes)</span>` 
+                    : `<span class="text-danger fw-bold">✗ Falla (Hay autocorrelación)</span>`;
+
+                // 2. Jarque-Bera (Normalidad)
+                let m3 = 0, m4 = 0;
+                for(let i=0; i<n; i++) {
+                    m3 += Math.pow(residuos[i], 3);
+                    m4 += Math.pow(residuos[i], 4);
+                }
+                m3 /= n; m4 /= n;
+                let var_e = sum_e2 / n; 
+                let skewness = m3 / Math.pow(var_e, 1.5);
+                let kurtosis = m4 / Math.pow(var_e, 2);
+                let jb_stat = (n / 6) * (Math.pow(skewness, 2) + 0.25 * Math.pow(kurtosis - 3, 2));
+                let jb_pval = 1 - jStat.chisquare.cdf(jb_stat, 2);
+                let jb_conclusion = (jb_pval >= alfa)
+                    ? `<span class="text-success fw-bold">✓ Pasa (Distribución Normal)</span>`
+                    : `<span class="text-danger fw-bold">✗ Falla (No es Normal)</span>`;
+
+                // 3. Breusch-Pagan (Homocedasticidad)
+                // Usamos la regresión auxiliar de residuos al cuadrado (Koenker-Bassett)
+                let aux_stats = getRegStats(e2_arr, X_arr);
+                let bp_stat = n * aux_stats.R2;
+                let bp_pval = 1 - jStat.chisquare.cdf(bp_stat, k);
+                let bp_conclusion = (bp_pval >= alfa)
+                    ? `<span class="text-success fw-bold">✓ Pasa (Varianza constante)</span>`
+                    : `<span class="text-danger fw-bold">✗ Falla (Heterocedasticidad)</span>`;
+
+                let supuestosHtml = `
+                    <tr>
+                        <td class="fw-bold bg-light text-start ps-3">Aleatoriedad (Independencia)</td>
+                        <td>Durbin-Watson</td>
+                        <td class="fw-bold">${dw_stat.toFixed(4)}</td>
+                        <td class="text-muted small">N/A (Cercano a 2 es ideal)</td>
+                        <td>${dw_conclusion}</td>
+                    </tr>
+                    <tr>
+                        <td class="fw-bold bg-light text-start ps-3">Normalidad</td>
+                        <td>Jarque-Bera</td>
+                        <td class="fw-bold">${jb_stat.toFixed(4)}</td>
+                        <td class="${(jb_pval < alfa)?'text-danger fw-bold':'text-success'}">${jb_pval.toFixed(4)}</td>
+                        <td>${jb_conclusion}</td>
+                    </tr>
+                    <tr>
+                        <td class="fw-bold bg-light text-start ps-3">Homocedasticidad</td>
+                        <td>Breusch-Pagan</td>
+                        <td class="fw-bold">${bp_stat.toFixed(4)}</td>
+                        <td class="${(bp_pval < alfa)?'text-danger fw-bold':'text-success'}">${bp_pval.toFixed(4)}</td>
+                        <td>${bp_conclusion}</td>
+                    </tr>
+                `;
+                document.getElementById('tabla_supuestos_body').innerHTML = supuestosHtml;
+                // =========================================================================
 
                 let predHtml = '';
                 for(let j=1; j<=k; j++) {
@@ -481,7 +560,6 @@
                 htmlStepwise += `</ul></div></div></div></div>`;
                 document.getElementById('res_stepwise_container').innerHTML = htmlStepwise;
 
-                let Y_pred = jStat.multiply(X_arr, Beta);
                 let scatterData = [];
                 for(let i=0; i<n; i++) scatterData.push({ x: Y_arr[i][0], y: Y_pred[i][0] });
                 
