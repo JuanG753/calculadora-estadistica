@@ -42,8 +42,10 @@
             <button class="btn btn-primary w-100 fw-bold fs-5 shadow-sm py-2" onclick="calcRegresion()">Calcular Regresión Matricial</button>
         </div>
 
+        <!-- Contenedor general de resultados -->
         <div id="res_regresion" class="d-none">
             <div id="ui_exitosa">
+                
                 <!-- SECCIÓN MATRICIAL -->
                 <div class="accordion mb-4 shadow-sm" id="accordionMatrices">
                     <div class="accordion-item border-dark">
@@ -144,7 +146,7 @@
                             </table>
                         </div>
                         
-                        <!-- NUEVOS GRÁFICOS DE DIAGNÓSTICO EN LA APP -->
+                        <!-- GRÁFICOS DE DIAGNÓSTICO EN LA APP -->
                         <div class="row px-3 pb-3">
                             <div class="col-md-6 mb-2">
                                 <h6 class="text-center fw-bold text-secondary">Aleatoriedad (Durbin-Watson)</h6>
@@ -159,7 +161,6 @@
                                 </div>
                             </div>
                         </div>
-
                     </div>
                 </div>
 
@@ -184,6 +185,7 @@
                         <canvas id="chartDispersion"></canvas>
                     </div>
                 </div>
+
             </div>
         </div>
     </div>
@@ -261,10 +263,13 @@
 
         function calcRegresion() {
             let resDiv = document.getElementById('res_regresion');
-            let uiExitosa = document.getElementById('ui_exitosa');
+            
+            // Limpiar mensaje de error anterior si existe
+            let oldError = document.getElementById('error_dinamico');
+            if(oldError) oldError.remove();
             
             try {
-                resDiv.classList.add('d-none');
+                resDiv.classList.add('d-none'); // Ocultar mientras calcula
                 
                 let rawText = document.getElementById('reg_datos').value.trim();
                 let alfa = parseFloat(document.getElementById('reg_alfa').value);
@@ -298,12 +303,12 @@
                         throw new Error(`Inconsistencia en la fila ${i+1}. Todas las filas deben tener la misma cantidad de datos.`);
                     }
                 }
-                if(n <= p) throw new Error(`Se requieren más observaciones que parámetros.`);
+                if(n <= p) throw new Error(`Se requieren más observaciones que parámetros (n > p).`);
 
-                resDiv.innerHTML = "";
-                resDiv.appendChild(uiExitosa);
+                // Mostrar interfaz completa (no la destruimos)
                 resDiv.classList.remove('d-none');
 
+                // LÓGICA DE MATRICES
                 let XT = jStat.transpose(X_arr);
                 let XTX = jStat.multiply(XT, X_arr);
                 let C = jStat.inv(XTX);
@@ -319,6 +324,7 @@
                 renderMatrix(C, 'mat_c');
                 renderMatrix(Beta, 'mat_beta');
                 
+                // LÓGICA ANOVA
                 let sumY = 0, sumY2 = 0;
                 for(let i=0; i<n; i++) { sumY += Y_arr[i][0]; sumY2 += Math.pow(Y_arr[i][0], 2); }
                 
@@ -375,6 +381,7 @@
                 document.getElementById('anova_conclusion').innerHTML = conc;
                 document.getElementById('anova_r2').innerHTML = `Coeficiente de Determinación (R²) = ${(R2*100).toFixed(2)}% &nbsp;&nbsp;|&nbsp;&nbsp; R² Ajustado = ${(R2_adj*100).toFixed(2)}%`;
 
+                // PRUEBAS T (COEFICIENTES)
                 let t_crit = jStat.studentt.inv(1 - alfa/2, df_E);
                 let coefHtml = "";
                 for(let j=0; j<p; j++) {
@@ -404,9 +411,7 @@
                 }
                 document.getElementById('tabla_coef_body').innerHTML = coefHtml;
 
-                // =========================================================================
-                // DIAGNÓSTICO DE SUPUESTOS Y NUEVAS GRÁFICAS DE CHART.JS
-                // =========================================================================
+                // DIAGNÓSTICO DE SUPUESTOS
                 let Y_pred = jStat.multiply(X_arr, Beta);
                 let residuos = [];
                 let e2_arr = [];
@@ -422,13 +427,12 @@
                     sum_e2 += e * e;
                     e2_arr.push([e * e]);
                     
-                    // Arrays para las gráficas
                     labelsAleat.push(i + 1);
                     dataZeroLine.push(0);
                     dataHomocedasticidad.push({x: Y_pred[i][0], y: e});
                 }
 
-                // 1. Durbin-Watson (Aleatoriedad)
+                // Durbin-Watson
                 let sum_de2 = 0;
                 for(let i=1; i<n; i++) { sum_de2 += Math.pow(residuos[i] - residuos[i-1], 2); }
                 let dw_stat = sum_de2 / sum_e2;
@@ -436,7 +440,7 @@
                     ? `<span class="text-success fw-bold">✓ Pasa (Errores independientes)</span>` 
                     : `<span class="text-danger fw-bold">✗ Falla (Hay autocorrelación)</span>`;
 
-                // 2. Jarque-Bera (Normalidad)
+                // Jarque-Bera
                 let m3 = 0, m4 = 0;
                 for(let i=0; i<n; i++) { m3 += Math.pow(residuos[i], 3); m4 += Math.pow(residuos[i], 4); }
                 m3 /= n; m4 /= n;
@@ -449,7 +453,7 @@
                     ? `<span class="text-success fw-bold">✓ Pasa (Distribución Normal)</span>`
                     : `<span class="text-danger fw-bold">✗ Falla (No es Normal)</span>`;
 
-                // 3. Breusch-Pagan (Homocedasticidad)
+                // Breusch-Pagan
                 let aux_stats = getRegStats(e2_arr, X_arr);
                 let bp_stat = n * aux_stats.R2;
                 let bp_pval = 1 - jStat.chisquare.cdf(bp_stat, k);
@@ -464,7 +468,7 @@
                 `;
                 document.getElementById('tabla_supuestos_body').innerHTML = supuestosHtml;
 
-                // --- INICIO DE GRÁFICAS DE DIAGNÓSTICO ---
+                // GRÁFICAS DE DIAGNÓSTICO
                 if(chartAleatInst) chartAleatInst.destroy();
                 let ctxAleat = document.getElementById('chartAleatoriedad').getContext('2d');
                 chartAleatInst = new Chart(ctxAleat, {
@@ -494,9 +498,9 @@
                     },
                     options: { responsive: true, maintainAspectRatio: false, scales: { x: { title: { display: true, text: 'Predicciones (Ŷ)'} }, y: { title: { display: true, text: 'Error'} } }, plugins: { legend: { display: false } } }
                 });
-                // --- FIN DE GRÁFICAS DE DIAGNÓSTICO ---
 
 
+                // PREDICCIÓN INPUTS
                 let predHtml = '';
                 for(let j=1; j<=k; j++) {
                     predHtml += `
@@ -508,6 +512,7 @@
                 document.getElementById('prediccion_inputs').innerHTML = predHtml;
                 document.getElementById('res_prediccion').classList.add('d-none');
 
+                // LÓGICA STEPWISE
                 let htmlStepwise = `
                 <div class="accordion mb-4 shadow-sm" id="accordionStepwise">
                     <div class="accordion-item border-warning">
@@ -597,9 +602,12 @@
                 htmlStepwise += `</ul></div></div></div></div>`;
                 document.getElementById('res_stepwise_container').innerHTML = htmlStepwise;
 
+                // GRÁFICA DE DISPERSIÓN (Y vs Ŷ)
                 let scatterData = [];
                 for(let i=0; i<n; i++) scatterData.push({ x: Y_arr[i][0], y: Y_pred[i][0] });
                 
+                let min_val = Math.min(...Y_arr.map(y=>y[0]), ...Y_pred.map(y=>y[0]));
+                let max_val = Math.max(...Y_arr.map(y=>y[0]), ...Y_pred.map(y=>y[0]));
                 let lineData = [{x: min_val, y: min_val}, {x: max_val, y: max_val}];
 
                 if(chartDisp) chartDisp.destroy();
@@ -616,13 +624,19 @@
                 });
 
             } catch(e) {
-                resDiv.innerHTML = `
+                // Nuevo sistema de captura de errores sin dañar el DOM principal
+                resDiv.classList.add('d-none');
+                
+                let errorBox = document.createElement('div');
+                errorBox.id = 'error_dinamico';
+                errorBox.innerHTML = `
                     <div class="alert alert-danger shadow-sm border-danger">
                         <h5 class="fw-bold text-danger">⚠️ Error detectado</h5>
                         <p class="mb-2 fs-6">${e.message}</p>
                     </div>
                 `;
-                resDiv.classList.remove('d-none');
+                // Insertamos el error justo antes de nuestro bloque de resultados
+                resDiv.parentNode.insertBefore(errorBox, resDiv);
                 console.error(e);
             }
         }
