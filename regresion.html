@@ -16,6 +16,7 @@
         .matrix-box { overflow-x: auto; font-family: monospace; font-size: 0.9em; background: #fff; border: 1px solid #dee2e6; border-radius: 5px; padding: 10px; margin-bottom: 10px; }
         .table-matrix td { padding: 4px 8px; border: 1px dashed #ccc; text-align: right; }
         .chart-container { position: relative; height: 350px; width: 100%; margin-top: 20px; }
+        .chart-container-sm { position: relative; height: 280px; width: 100%; margin-top: 10px; }
         .accordion-button:not(.collapsed) { background-color: #e9ecef; color: #212529; box-shadow: none; }
         .accordion-button:focus { box-shadow: none; }
     </style>
@@ -121,14 +122,14 @@
                     </div>
                 </div>
 
-                <!-- NUEVO: DIAGNÓSTICO DE SUPUESTOS -->
+                <!-- DIAGNÓSTICO DE SUPUESTOS -->
                 <div class="card p-0 border-warning shadow-sm mb-4">
                     <div class="card-header bg-warning text-dark text-center fw-bold fs-5">
                         Diagnóstico de Supuestos del Modelo (Análisis de Residuos)
                     </div>
                     <div class="card-body p-0">
-                        <div class="table-responsive">
-                            <table class="table table-bordered text-center mb-0 align-middle">
+                        <div class="table-responsive mb-3">
+                            <table class="table table-bordered text-center mb-0 align-middle border-warning">
                                 <thead class="table-light">
                                     <tr class="small">
                                         <th>Supuesto Estadístico</th>
@@ -142,6 +143,23 @@
                                 </tbody>
                             </table>
                         </div>
+                        
+                        <!-- NUEVOS GRÁFICOS DE DIAGNÓSTICO EN LA APP -->
+                        <div class="row px-3 pb-3">
+                            <div class="col-md-6 mb-2">
+                                <h6 class="text-center fw-bold text-secondary">Aleatoriedad (Durbin-Watson)</h6>
+                                <div class="chart-container-sm">
+                                    <canvas id="chartAleatoriedad"></canvas>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-2">
+                                <h6 class="text-center fw-bold text-secondary">Homocedasticidad (Breusch-Pagan)</h6>
+                                <div class="chart-container-sm">
+                                    <canvas id="chartHomocedasticidad"></canvas>
+                                </div>
+                            </div>
+                        </div>
+
                     </div>
                 </div>
 
@@ -238,6 +256,8 @@
         }
 
         let chartDisp = null;
+        let chartAleatInst = null;
+        let chartHomocInst = null;
 
         function calcRegresion() {
             let resDiv = document.getElementById('res_regresion');
@@ -385,25 +405,32 @@
                 document.getElementById('tabla_coef_body').innerHTML = coefHtml;
 
                 // =========================================================================
-                // NUEVO: DIAGNÓSTICO DE SUPUESTOS (Normalidad, Aleatoriedad, Homocedasticidad)
+                // DIAGNÓSTICO DE SUPUESTOS Y NUEVAS GRÁFICAS DE CHART.JS
                 // =========================================================================
                 let Y_pred = jStat.multiply(X_arr, Beta);
                 let residuos = [];
                 let e2_arr = [];
                 let sum_e2 = 0;
                 
+                let labelsAleat = [];
+                let dataZeroLine = [];
+                let dataHomocedasticidad = [];
+
                 for(let i=0; i<n; i++) {
                     let e = Y_arr[i][0] - Y_pred[i][0];
                     residuos.push(e);
                     sum_e2 += e * e;
                     e2_arr.push([e * e]);
+                    
+                    // Arrays para las gráficas
+                    labelsAleat.push(i + 1);
+                    dataZeroLine.push(0);
+                    dataHomocedasticidad.push({x: Y_pred[i][0], y: e});
                 }
 
                 // 1. Durbin-Watson (Aleatoriedad)
                 let sum_de2 = 0;
-                for(let i=1; i<n; i++) {
-                    sum_de2 += Math.pow(residuos[i] - residuos[i-1], 2);
-                }
+                for(let i=1; i<n; i++) { sum_de2 += Math.pow(residuos[i] - residuos[i-1], 2); }
                 let dw_stat = sum_de2 / sum_e2;
                 let dw_conclusion = (dw_stat > 1.5 && dw_stat < 2.5) 
                     ? `<span class="text-success fw-bold">✓ Pasa (Errores independientes)</span>` 
@@ -411,10 +438,7 @@
 
                 // 2. Jarque-Bera (Normalidad)
                 let m3 = 0, m4 = 0;
-                for(let i=0; i<n; i++) {
-                    m3 += Math.pow(residuos[i], 3);
-                    m4 += Math.pow(residuos[i], 4);
-                }
+                for(let i=0; i<n; i++) { m3 += Math.pow(residuos[i], 3); m4 += Math.pow(residuos[i], 4); }
                 m3 /= n; m4 /= n;
                 let var_e = sum_e2 / n; 
                 let skewness = m3 / Math.pow(var_e, 1.5);
@@ -426,7 +450,6 @@
                     : `<span class="text-danger fw-bold">✗ Falla (No es Normal)</span>`;
 
                 // 3. Breusch-Pagan (Homocedasticidad)
-                // Usamos la regresión auxiliar de residuos al cuadrado (Koenker-Bassett)
                 let aux_stats = getRegStats(e2_arr, X_arr);
                 let bp_stat = n * aux_stats.R2;
                 let bp_pval = 1 - jStat.chisquare.cdf(bp_stat, k);
@@ -435,30 +458,44 @@
                     : `<span class="text-danger fw-bold">✗ Falla (Heterocedasticidad)</span>`;
 
                 let supuestosHtml = `
-                    <tr>
-                        <td class="fw-bold bg-light text-start ps-3">Aleatoriedad (Independencia)</td>
-                        <td>Durbin-Watson</td>
-                        <td class="fw-bold">${dw_stat.toFixed(4)}</td>
-                        <td class="text-muted small">N/A (Cercano a 2 es ideal)</td>
-                        <td>${dw_conclusion}</td>
-                    </tr>
-                    <tr>
-                        <td class="fw-bold bg-light text-start ps-3">Normalidad</td>
-                        <td>Jarque-Bera</td>
-                        <td class="fw-bold">${jb_stat.toFixed(4)}</td>
-                        <td class="${(jb_pval < alfa)?'text-danger fw-bold':'text-success'}">${jb_pval.toFixed(4)}</td>
-                        <td>${jb_conclusion}</td>
-                    </tr>
-                    <tr>
-                        <td class="fw-bold bg-light text-start ps-3">Homocedasticidad</td>
-                        <td>Breusch-Pagan</td>
-                        <td class="fw-bold">${bp_stat.toFixed(4)}</td>
-                        <td class="${(bp_pval < alfa)?'text-danger fw-bold':'text-success'}">${bp_pval.toFixed(4)}</td>
-                        <td>${bp_conclusion}</td>
-                    </tr>
+                    <tr><td class="fw-bold bg-light text-start ps-3">Aleatoriedad</td><td>Durbin-Watson</td><td class="fw-bold">${dw_stat.toFixed(4)}</td><td class="text-muted small">N/A (≈ 2)</td><td>${dw_conclusion}</td></tr>
+                    <tr><td class="fw-bold bg-light text-start ps-3">Normalidad</td><td>Jarque-Bera</td><td class="fw-bold">${jb_stat.toFixed(4)}</td><td class="${(jb_pval < alfa)?'text-danger fw-bold':'text-success'}">${jb_pval.toFixed(4)}</td><td>${jb_conclusion}</td></tr>
+                    <tr><td class="fw-bold bg-light text-start ps-3">Homocedasticidad</td><td>Breusch-Pagan</td><td class="fw-bold">${bp_stat.toFixed(4)}</td><td class="${(bp_pval < alfa)?'text-danger fw-bold':'text-success'}">${bp_pval.toFixed(4)}</td><td>${bp_conclusion}</td></tr>
                 `;
                 document.getElementById('tabla_supuestos_body').innerHTML = supuestosHtml;
-                // =========================================================================
+
+                // --- INICIO DE GRÁFICAS DE DIAGNÓSTICO ---
+                if(chartAleatInst) chartAleatInst.destroy();
+                let ctxAleat = document.getElementById('chartAleatoriedad').getContext('2d');
+                chartAleatInst = new Chart(ctxAleat, {
+                    type: 'line',
+                    data: {
+                        labels: labelsAleat,
+                        datasets: [
+                            { label: 'Línea Cero', data: dataZeroLine, borderColor: 'red', borderDash: [5, 5], borderWidth: 2, pointRadius: 0, fill: false },
+                            { label: 'Residuo', data: residuos, borderColor: '#0d6efd', backgroundColor: '#0d6efd', pointRadius: 4, borderWidth: 2, fill: false, tension: 0.1 }
+                        ]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, scales: { x: { title: { display: true, text: 'Orden (i)'} }, y: { title: { display: true, text: 'Error'} } }, plugins: { legend: { display: false } } }
+                });
+
+                let min_pred = Math.min(...Y_pred.map(y=>y[0]));
+                let max_pred = Math.max(...Y_pred.map(y=>y[0]));
+                
+                if(chartHomocInst) chartHomocInst.destroy();
+                let ctxHomoc = document.getElementById('chartHomocedasticidad').getContext('2d');
+                chartHomocInst = new Chart(ctxHomoc, {
+                    type: 'scatter',
+                    data: {
+                        datasets: [
+                            { label: 'Línea Cero', data: [{x: min_pred, y: 0}, {x: max_pred, y: 0}], type: 'line', borderColor: 'red', borderDash: [5, 5], borderWidth: 2, pointRadius: 0, fill: false },
+                            { label: 'Residuos', data: dataHomocedasticidad, backgroundColor: '#198754', pointRadius: 5 }
+                        ]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, scales: { x: { title: { display: true, text: 'Predicciones (Ŷ)'} }, y: { title: { display: true, text: 'Error'} } }, plugins: { legend: { display: false } } }
+                });
+                // --- FIN DE GRÁFICAS DE DIAGNÓSTICO ---
+
 
                 let predHtml = '';
                 for(let j=1; j<=k; j++) {
@@ -563,8 +600,6 @@
                 let scatterData = [];
                 for(let i=0; i<n; i++) scatterData.push({ x: Y_arr[i][0], y: Y_pred[i][0] });
                 
-                let min_val = Math.min(...Y_arr.map(y=>y[0]), ...Y_pred.map(y=>y[0]));
-                let max_val = Math.max(...Y_arr.map(y=>y[0]), ...Y_pred.map(y=>y[0]));
                 let lineData = [{x: min_val, y: min_val}, {x: max_val, y: max_val}];
 
                 if(chartDisp) chartDisp.destroy();
